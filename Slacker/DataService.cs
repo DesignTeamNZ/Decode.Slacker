@@ -227,7 +227,7 @@ namespace Slacker {
         public Table TableAttribute {
             get {
                 if (_tableAttributeSearched) {
-                    _tableAttribute = GetType().GetCustomAttribute<Table>();
+                    _tableAttribute = typeof(T).GetCustomAttribute<Table>();
                     _tableAttributeSearched = true;
                 }
 
@@ -243,7 +243,7 @@ namespace Slacker {
         public string Table {
             get {
                 if(_table == null) {
-                    _table = TableAttribute?.Name ?? GetType().Name;
+                    _table = TableAttribute?.Name ?? typeof(T).Name;
                 }
                 return _table;
             }
@@ -260,7 +260,7 @@ namespace Slacker {
             get {
                 if (_alias == null) {
                     _alias = TableAttribute?.Alias ?? 
-                        GetType().Name.PadRight(3, '0').Substring(3);
+                        typeof(T).Name.PadRight(3, '0').Substring(3);
                 }
                 return _alias;
             }
