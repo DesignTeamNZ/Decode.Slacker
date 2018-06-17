@@ -22,32 +22,36 @@ namespace SlackerTests
         [Field(IsPrimary = true)]
         public int ID { get; private set; }
 
+        private string _username;
+        private string _password;
+        private string _email;
+
         public string Username {
             get {
-                return Username;
+                return _username;
             }
             set {
-                this.Username = value;
+                _username = value;
                 PropChanged();
             }
         }
 
         public string Password {
             get {
-                return Password;
+                return _password;
             }
             set {
-                this.Password = value;
+                _password = value;
                 PropChanged();
             }
         }
-
+        
         public string Email {
             get {
-                return Email;
+                return _email;
             }
             set {
-                this.Email = value;
+                _email = value;
                 PropChanged();
             }
         }

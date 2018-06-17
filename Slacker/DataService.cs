@@ -8,341 +8,466 @@ using Slacker.Helpers;
 using Slacker.Helpers.Attributes;
 using Slacker.Helpers.DataTables;
 using System.Linq.Expressions;
-using System.Windows.Forms;
 
 namespace Slacker {
 
-    public interface IDataService { }
-
-    public interface IDataService<T> {
-
-        // Create
-        bool Insert(T model);
-        bool Insert(IEnumerable<T> models);
-
-        // Retrieve
-        IEnumerable<T> Select();
-        IEnumerable<T> Select(Condition where);
-
-        // Update
-        bool Update(T model);
-        bool Update(dynamic model, Condition where);
-        bool Update(dynamic model, string[] changedFields, Condition where);
-        
-        // Delete
-        bool Delete(T model);
-        bool Delete(Condition where);
-        
-        // Database(SQL) Helper Methods
-        IEnumerable<dynamic> DoSafeQuery(string query);
-        IEnumerable<M> DoSafeQuery<M>(string query);
-        bool DoSafeUpdate(string update, object model);
+    public interface IDataService {
+        // todo
     }
 
-    public class DataService<T> : IDataService<T> {
+    public abstract class DataServiceProvider<T> : IDataService where T: DataModel {
 
-        protected static ServiceRegistry SERVICE_REGISTRY = new ServiceRegistry();
-
-        protected SqlConnection Connection { get; set; }
-        protected DataTableConverter<T> DataTableConverter { get; set; }
-
-        // <tblField>
-        public List<string> PrimaryKey { get; private set; }
-
-        // <tblField, classField>
-        public Dictionary<string, string> ModelFields { get; private set; }
-        public Dictionary<string, string> ModelFieldsNonKey { get; private set; }
-
-
-        // Stores Default Condition based on PrimaryKey
-        protected string keyCondition;
-
-        public DataService() {}
-
-        public DataService(SqlConnection sqlConnection) {
-            this.Connection = sqlConnection;
-            this.DataTableConverter = new DataTableConverter<T>();
-
-            this.PrimaryKey = new List<string>();
-            this.ModelFields = new Dictionary<string, string>();
-
-            RegisterModelInfo();
-
-            // Add DataService as managing service for model (T)
-            SERVICE_REGISTRY.Register(typeof(T), this);
+        #region Insert
+        /// <summary>
+        /// Perform insert query using data model
+        /// </summary>
+        /// <param name="model">The Model</param>
+        public void Insert(T model) {
+            Insert(new[] { model });
         }
 
         /// <summary>
-        /// Performs reflection on given DataModel (T) and caches result
+        /// Perform insert query using data model(s)
         /// </summary>
-        private void RegisterModelInfo() {
-            PropertyInfo[] fields = typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (PropertyInfo info in fields) {
-                Field field = info.GetCustomAttribute<Field>();
-                if (field == null) {
-                    ModelFields.Add(info.Name, info.Name);
-                    continue;
+        /// <param name="models">The Models</param>
+        public abstract void Insert(params T[] models);
+        #endregion
+
+        #region Select
+        /// <summary>
+        /// Select all records
+        /// </summary>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        public IEnumerable<T> SelectAll() {
+            return Select("", false);
+        }
+        
+        /// <summary>
+        /// Select using Expression and Parameter Object
+        /// </summary>
+        /// <param name="predicate"></param>
+        /// <param name="whereParam"></param>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        public IEnumerable<T> Select(Expression<Func<T, bool>> predicate, object whereParam) {
+            return Select(Condition.Where<T>(predicate, whereParam));
+        }
+
+        /// <summary>
+        /// Perform a select query with Condition
+        /// </summary>
+        /// <param name="where">The where condition</param>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        public IEnumerable<T> Select(Condition where) {
+            return Select(where.QueryString, where.Parameters);
+        }
+        
+        /// <summary>
+        /// Selects using a default condition with param object
+        /// </summary>
+        /// <param name="whereParam"></param>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        public abstract IEnumerable<T> SelectByKey(object whereParam);
+
+        /// <summary>
+        /// Perform a select query with Condition
+        /// </summary>
+        /// <param name="where">Condition query</param>
+        /// <param name="whereParam">Condition parameter</param>
+        /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
+        public abstract IEnumerable<T> Select(string where, object whereParam);
+        #endregion
+
+        #region Update
+
+        #endregion
+
+        #region Delete
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="where"></param>
+        public void Delete(Condition where) {
+            Delete(where.QueryString, where.Parameters);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        public abstract void Delete(T model);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="where"></param>
+        /// <param name="whereParam"></param>
+        public abstract void Delete(string where, object whereParam);
+        #endregion
+
+    }
+
+    public class DataService<T> : DataServiceProvider<T> where T : DataModel {
+
+        private static ServiceRegistry _serviceRegistry;
+        /// <summary>
+        /// Stores all singleton type instances of IDataService
+        /// </summary>
+        public static ServiceRegistry SERVICE_REGISTRY {
+            get {
+                if (_serviceRegistry == null) {
+                    _serviceRegistry = new ServiceRegistry();
+                }
+                return _serviceRegistry;
+            }
+        }
+
+        private string _queryFieldCols;
+        /// <summary>
+        /// Returns a pre-generated field string for table fields
+        /// </summary>
+        public string QueryFieldCols {
+            get {
+                if (_queryFieldCols == null) {
+                    _queryFieldCols = string.Join(",", Fields.Keys.Select(
+                        col => $@"[{col}]"
+                    ));
+                }
+                return _queryFieldCols;
+            }
+        }
+
+        private string _queryNonKeyFieldCols;
+        /// <summary>
+        /// Returns a pre-generated field string for table non-key fields
+        /// </summary>
+        public string QueryNonKeyFieldCols {
+            get {
+                if (_queryNonKeyFieldCols == null) {
+                    _queryNonKeyFieldCols = string.Join(",",
+                        NonKeyFields.Keys.Select(
+                            col => $@"[{col}]"
+                        )
+                    );
+                }
+                return _queryNonKeyFieldCols;
+            }
+        }
+
+        private string _queryModelRefs;
+        /// <summary>
+        /// Returns a pre-generated field string for table fields
+        /// </summary>
+        public string QueryModelRefs {
+            get {
+                if (_queryModelRefs == null) {
+                    _queryModelRefs = string.Join(",", Fields.Values.Select(
+                        col => $@"@{col}"
+                    ));
+                }
+                return _queryModelRefs;
+            }
+        }
+
+        private string _queryNonKeyModelRefs;
+        /// <summary>
+        /// Returns a pre-generated field string for table non-key fields
+        /// </summary>
+        public string QueryNonKeyModelRefs {
+            get {
+                if (_queryNonKeyModelRefs == null) {
+                    _queryNonKeyModelRefs = string.Join(",",
+                        NonKeyFields.Values.Select(
+                            col => $@"@{col}"
+                        )
+                    );
+                }
+                return _queryNonKeyModelRefs;
+            }
+        }
+
+
+        private string _querySelects;
+        /// <summary>
+        /// Returns query selects for model fields
+        /// </summary>
+        public string QuerySelects {
+            get {
+                if (_querySelects == null) {
+                    _querySelects = string.Join(",",
+                        NonKeyFields.Select(
+                            kv => $@"[{Alias}].[{kv.Key}] AS [{kv.Value}]"
+                        )
+                    );
+                }
+                return _querySelects;
+            }
+        }
+
+        private string _queryDefaultUpdateRefs;
+        /// <summary>
+        /// Returns query updates for all model fields
+        /// </summary>
+        public string QueryDefaultUpdateRefs {
+            get {
+                if (_queryDefaultUpdateRefs == null) {
+                    _queryDefaultUpdateRefs = string.Join(",",
+                        NonKeyFields.Select(kv => $@"[{Alias}].[{kv.Key}] = @{kv.Value}")
+                    );
+                }
+                return _queryDefaultUpdateRefs;
+            }
+        }
+
+
+        private bool _tableAttributeSearched;
+        public Table _tableAttribute;
+        /// <summary>
+        /// Returns the Table Attribute if defined for this table
+        /// </summary>
+        public Table TableAttribute {
+            get {
+                if (_tableAttributeSearched) {
+                    _tableAttribute = GetType().GetCustomAttribute<Table>();
+                    _tableAttributeSearched = true;
                 }
 
-                // Ignored Fields
-                if (field.Ignored)
-                    continue;
-
-                // Add Primary Key
-                if (field.IsPrimary)
-                    PrimaryKey.Add(field.Name ?? info.Name);
-                else
-                    ModelFieldsNonKey.Add(field.Name ?? info.Name, info.Name);
-
-                // Add Field
-                ModelFields.Add(field.Name ?? info.Name, info.Name);
+                return _tableAttribute;
             }
         }
 
 
-        #region CRUD Functions
-
-        public bool Insert(T model) {
-            throw new NotImplementedException();
-        }
-
-        public bool Insert(IEnumerable<T> models) {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<T> Select() {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<T> Select(Condition where) {
-            throw new NotImplementedException();
-        }
-
-        public bool Update(T model) {
-            throw new NotImplementedException();
-        }
-
-        public bool Update(dynamic model, Condition where) {
-            throw new NotImplementedException();
-        }
-
-        public bool Update(dynamic model, string[] changedFields, Condition where) {
-            throw new NotImplementedException();
-        }
-
-        public bool Delete(T model) {
-            throw new NotImplementedException();
-        }
-
-        public bool Delete(Condition where) {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-
-        #region Query Building 
-
-        // Create
+        private string _table;
         /// <summary>
-        /// SQL Insert Query
-        /// </summary>
-        protected string InsertQuery {
-            get {
-                return InsertQuery ?? (InsertQuery = BuildInsert());
-            }
-            set {
-                InsertQuery = value;
-            }
-        }
-
-        /// <summary>
-        /// Builds SQL Insert Query
-        /// </summary>
-        /// <returns>SQL Insert Query</returns>
-        protected string BuildInsert() {
-            IEnumerable<string> tableFields = ModelFields.Keys.Select(field => "[" + field + "]");
-            IEnumerable<string> modelFields = ModelFields.Values.Select(field => "@" + field);
-
-            return $@"INSERT INTO {GetTableName()} ( {string.Join(",", tableFields)} ) 
-                        VALUES ( {string.Join(",", modelFields) } );";
-        }
-
-        // Retrieve
-        /// <summary>
-        /// SQL Select Query
-        /// </summary>
-        protected string SelectQuery {
-            get {
-                return SelectQuery ?? (SelectQuery = BuildSelect());
-            }
-            set {
-                SelectQuery = value;
-            }
-        }
-
-        /// <summary>
-        /// Builds SQL Select Query
-        /// </summary>
-        /// <returns></returns>
-        protected string BuildSelect() {
-            return $@"SELECT * FROM {GetTableName()}";
-        }
-
-        // Update
-        /// <summary>
-        /// Builds SQL Update Query
-        /// </summary>
-        /// <param name="changedFields">Which fields need to be updated in the query</param>
-        /// <returns>SQL Update Query</returns>
-        protected string BuildUpdate(string[] changedFields) {
-            string[] setFields = ModelFields.Where(
-                kv => changedFields.Contains(kv.Key)
-            ).Select(
-                kv => $@"[{kv.Key}]=@{kv.Value}"
-            ).ToArray();
-
-            return $@"UPDATE {GetTableName()} SET {string.Join(" ", setFields)}";
-        }
-
-
-        // Delete
-        /// <summary>
-        /// SQL Delete Query
-        /// </summary>
-        protected string DeleteQuery {
-            get {
-                return DeleteQuery ?? (DeleteQuery = BuildDelete());
-            }
-            set {
-                DeleteQuery = value;
-            }
-        }
-
-        /// <summary>
-        /// Builds SQL Delete Query
-        /// </summary>
-        /// <returns>Delete Query string without condition</returns>
-        protected string BuildDelete() {
-            return $@"DELETE FROM {GetTableName()}";
-        }
-
-        #endregion
-
-        
-
-        #region Helper Methods
-
-        /// <summary>
-        /// Table Name for Managing Model
+        /// Database Table
         /// </summary>
         public string Table {
             get {
-                return Table ?? (Table = GetTableName());
+                if(_table == null) {
+                    _table = TableAttribute?.Name ?? GetType().Name;
+                }
+                return _table;
             }
-            private set {
-                this.Table = value;
+            set {
+                _table = value;
+            }
+        }
+
+        private string _alias;
+        /// <summary>
+        /// Database Alias
+        /// </summary>
+        public string Alias {
+            get {
+                if (_alias == null) {
+                    _alias = TableAttribute?.Alias ?? 
+                        GetType().Name.PadRight(3, '0').Substring(3);
+                }
+                return _alias;
+            }
+            set {
+                _alias = value;
+            }
+        }
+
+        
+        private string _defaultCondition;
+        /// <summary>
+        /// Default condition based on Primary Key
+        /// </summary>
+        public string DefaultCondition {
+            get {
+                if (_defaultCondition == null) {
+                    _defaultCondition = string.Join(" AND ", PrimaryKey.Select(
+                        field => $@"([{Alias}].[{field}] = @{Fields[field]})"
+                    ));
+                }
+                return _defaultCondition;
+            }
+        }
+
+        private DataTableConverter<T> _datatableConverter;
+        /// <summary>
+        /// Slacker Object to DataTable Converter
+        /// </summary>
+        public DataTableConverter<T> DataTableConverter {
+            get {
+                if (_datatableConverter == null) {
+                    _datatableConverter = new DataTableConverter<T>();
+                }
+                return _datatableConverter;
             }
         }
 
         /// <summary>
-        /// Gets Table Name for Given Model
+        /// Enable this setting to allow this model to use delete
         /// </summary>
-        /// <returns>Table Name</returns>
-        private string GetTableName() {
-            var tableAttr = typeof(T).GetCustomAttribute<Table>(false);
-            return tableAttr != null ? tableAttr.Name : typeof(T).Name;
-        }
+        public bool AllowDelete { get; set; }
 
         /// <summary>
-        /// Called By all "Safe" functions when exception is thrown
+        /// Enable this setting to allow this model to use delete all
         /// </summary>
-        public static Action<Exception> OnExceptionThrown = delegate (Exception e) {
-            Console.WriteLine(e.ToString());
-            if (SlackerApp.Flags.HasFlag(SlackerFlags.ON_EXCEPTION_DISPLAY_MESSAGEBOX)) {
-                //TODO: Figure out best implementation here
-            }
-
-            if (SlackerApp.Flags.HasFlag(SlackerFlags.ON_EXCEPTION_THROW)) {
-                throw e;
-            }
-        };
+        public bool AllowDeleteAll { get; set; }
 
         /// <summary>
-        /// Performs a Dapper SQL Query and Maps back to dynamic type.
-        /// Calls DataService.OnExceptionThrow on exception
+        /// Enable this setting to allow global updates on this service
         /// </summary>
-        /// <typeparam name="M">Model to Map back to</typeparam>
-        /// <param name="query">SQL Query to be executed</param>
-        /// <returns>IEnumerable containing results from query</returns>
-        public IEnumerable<dynamic> DoSafeQuery(string query) {
-            try {
-                Connection.Open();
-                return Connection.Query(query);
-            }
-            catch (Exception e) {
-                OnExceptionThrown(e);
-                return null;
-            }
-            finally {
-                Connection.Close();
-            }
-        }
+        public bool AllowGlobalUpdates { get; set; }
+        
+        /// <summary>
+        /// The SQLConnection for this DataService
+        /// </summary>
+        public SqlConnection Connection { get; set; }
+
+        /// <summary>
+        /// Table key fields
+        /// </summary>
+        public List<string> PrimaryKey { get; set; }
+
+        /// <summary>
+        /// Table Fields
+        /// TableColumn -> ModelProperty
+        /// </summary>
+        public Dictionary<string, string> Fields { get; private set; }
+
+        /// <summary>
+        /// Table Non-Key Fields
+        /// TableColumn -> ModelProperty
+        /// </summary>
+        public Dictionary<string, string> NonKeyFields { get; private set; }
 
 
         /// <summary>
-        /// Performs a Dapper SQL Query and Maps back to Model.
-        /// Calls DataService.OnExceptionThrow on exception
+        /// Initializes a new DataService with a given connection
         /// </summary>
-        /// <typeparam name="M">Model to Map back to</typeparam>
-        /// <param name="query">SQL Query to be executed</param>
-        /// <returns>IEnumerable containing results from query</returns>
-        public IEnumerable<M> DoSafeQuery<M>(string query) {
-            try {
-                Connection.Open();
-                return Connection.Query<M>(query);
-            }
-            catch (Exception e) {
-                OnExceptionThrown(e);
-                return null;
-            }
-            finally {
-                Connection.Close();
-            }
-        }
+        /// <param name="sqlConnection">The SqlConnection</param>
+        public DataService(SqlConnection sqlConnection = null) {
+            this.Connection = sqlConnection;
 
-        /// <summary>
-        /// Performs an Dapper SQL Update with given parameter model.
-        /// Calls DataService.OnExceptionThrow on exception
-        /// </summary>
-        /// <param name="update">The SQL Update String to be executed.</param>
-        /// <param name="model">Object model to be handed to dapper for parameter binding.</param>
-        /// <returns>Whether the given update was successful or not</returns>
-        public bool DoSafeUpdate(string update, object model) {
-            try {
-                Connection.Open();
-                Connection.Execute(update, model);
-            }
-            catch (Exception e) {
-                OnExceptionThrown(e);
-                return false;
-            }
-            finally {
-                Connection.Close();
-            }
+            // Get Model Properties
+            var props = typeof(T).GetProperties(
+                BindingFlags.Instance | BindingFlags.Public
+            ).ToList();
+            
+            // Register Fields
+            this.PrimaryKey = new List<string>();
+            this.Fields = new Dictionary<string, string>();
+            this.NonKeyFields = new Dictionary<string, string>();
+            //  
+            props.ForEach(propInfo => {
+                var field = propInfo.GetCustomAttribute<Field>();
+                if (field == null) {
+                    Fields.Add(propInfo.Name, propInfo.Name);
+                    return;
+                }
 
-            return true;
-        }
-
-        /// <summary>
-        /// Retrieves a registered DataService 
-        /// </summary>
-        /// <typeparam name="M">M : DataModel</typeparam>
-        /// <returns>The responsible DataService for given Model M</returns>
-        public static DataService<M> GetModelService<M>()  {
-            return (DataService<M>) SERVICE_REGISTRY.GetService(typeof(M));
+                // Ignored Fields
+                if (field.Ignored) {
+                    return;
+                }
+                
+                Fields.Add(field.Name ?? propInfo.Name, propInfo.Name);
+            });
+            
+            // Add DataService as managing service for model (T)
+            SERVICE_REGISTRY.Register(typeof(T), this);
         }
         
+
+        #region CRUD Functions
+        private string _insertQuery;
+        public override void Insert(params T[] models) {
+
+            // Build Insert Query
+            if(_insertQuery == null) { 
+                _insertQuery = $@"
+                    INSERT INTO [{Table}] [{Alias}] ({QueryNonKeyFieldCols}) 
+                    VALUES  {QueryNonKeyModelRefs};";
+            }
+
+            // Do Insert
+            // todo Execute Multiple
+            foreach (var model in models) {
+                Connection.Execute(_insertQuery, model);
+            }
+        }
+        
+        public override IEnumerable<T> SelectByKey(object whereParam) {
+            return Select(DefaultCondition, whereParam);
+        }
+        
+        private string _selectQuery;
+        public override IEnumerable<T> Select(string where, object whereParam) {
+            // Build Query
+            if (_selectQuery == null) {
+                _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}]";
+            }
+
+            // Select all if no condition
+            if (string.IsNullOrEmpty(where)) {
+                return Connection.Query<T>(_selectQuery, null);
+            }
+
+            // Select with condition
+            return Connection.Query<T>(
+                _selectQuery + " WHERE " + where, 
+                whereParam
+            );
+        }
+
+        /// <summary>
+        /// Updates a model using default condition chang
+        /// </summary>
+        /// <param name="model"></param>
+        public void Update(T model, bool onlyChanged = true) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="fields">The fields to be updated or null for all</param>
+        /// <param name="where">The condition or null for all</param>
+        public void Update(object param, string[] fields = null, string where = null) {
+            throw new NotImplementedException();
+        }
+        
+        public override void Delete(T model) {
+            Delete(DefaultCondition, model);
+        }
+        
+        public override void Delete(string where, object whereParam) {
+            string query = $@"DELETE FROM {Table}";
+
+            if (string.IsNullOrEmpty(where)) {
+                // Runtime "Sanity" Check
+                if (!AllowDeleteAll) {
+                    throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
+                }
+                // Delete All
+                Connection.Execute(query);
+            }
+
+            // Runtime "Sanity" Check
+            if (!AllowDelete) {
+                throw new Exception("DataService.AllowDelete must be enabled to delete records");
+            }
+            // Delete by Condition
+            Connection.Execute(query + " WHERE " + where, whereParam);
+        }
+        #endregion
+        
+        
+
+        #region Helper Methods
+        /// <summary>
+        /// Retrieves a registered DataService for Model
+        /// </summary>
+        /// <typeparam name="M">The DataModel Type</typeparam>
+        /// <returns>The responsible DataService for given Model M</returns>
+        public static DataService<ST> GetModelService<ST>() where ST: DataModel  {
+            return (DataService<ST>) SERVICE_REGISTRY.GetService(typeof(ST));
+        }
         #endregion
 
     }
