@@ -6,8 +6,9 @@ using System.Linq;
 using System.Reflection;
 using Slacker.Helpers;
 using Slacker.Helpers.Attributes;
-using Slacker.Helpers.DataTables;
 using System.Linq.Expressions;
+using System.Data;
+using System.Dynamic;
 
 namespace Slacker {
 
@@ -128,8 +129,8 @@ namespace Slacker {
         public string QueryFieldCols {
             get {
                 if (_queryFieldCols == null) {
-                    _queryFieldCols = string.Join(",", Fields.Keys.Select(
-                        col => $@"[{col}]"
+                    _queryFieldCols = string.Join(",", Fields.Select(
+                            field => $@"[{field.TableField}]"
                     ));
                 }
                 return _queryFieldCols;
@@ -144,8 +145,8 @@ namespace Slacker {
             get {
                 if (_queryNonKeyFieldCols == null) {
                     _queryNonKeyFieldCols = string.Join(",",
-                        NonKeyFields.Keys.Select(
-                            col => $@"[{col}]"
+                        NonKeyFields.Select(
+                            field => $@"[{field.TableField}]"
                         )
                     );
                 }
@@ -160,8 +161,8 @@ namespace Slacker {
         public string QueryModelRefs {
             get {
                 if (_queryModelRefs == null) {
-                    _queryModelRefs = string.Join(",", Fields.Values.Select(
-                        col => $@"@{col}"
+                    _queryModelRefs = string.Join(",", Fields.Select(
+                        field => $"@{field.ModelField}"
                     ));
                 }
                 return _queryModelRefs;
@@ -176,8 +177,8 @@ namespace Slacker {
             get {
                 if (_queryNonKeyModelRefs == null) {
                     _queryNonKeyModelRefs = string.Join(",",
-                        NonKeyFields.Values.Select(
-                            col => $@"@{col}"
+                        NonKeyFields.Select(
+                            field => $"@{field.ModelField}"
                         )
                     );
                 }
@@ -195,7 +196,7 @@ namespace Slacker {
                 if (_querySelects == null) {
                     _querySelects = string.Join(",",
                         NonKeyFields.Select(
-                            kv => $@"[{Alias}].[{kv.Key}] AS [{kv.Value}]"
+                            field => $"[{Alias}].[{field.TableField}] AS [{field.ModelField}]"
                         )
                     );
                 }
@@ -211,7 +212,9 @@ namespace Slacker {
             get {
                 if (_queryDefaultUpdateRefs == null) {
                     _queryDefaultUpdateRefs = string.Join(",",
-                        NonKeyFields.Select(kv => $@"[{Alias}].[{kv.Key}] = @{kv.Value}")
+                        NonKeyFields.Select(
+                            field => $@"[{Alias}].[{field.TableField}] = @{field.ModelField}"
+                        )
                     );
                 }
                 return _queryDefaultUpdateRefs;
@@ -278,25 +281,44 @@ namespace Slacker {
             get {
                 if (_defaultCondition == null) {
                     _defaultCondition = string.Join(" AND ", PrimaryKey.Select(
-                        field => $@"([{Alias}].[{field}] = @{Fields[field]})"
+                        field => $@"([{Alias}].[{field.TableField}] = @{field.ModelField})"
                     ));
                 }
                 return _defaultCondition;
             }
         }
 
-        private DataTableConverter<T> _datatableConverter;
+        private List<DataModelField> _primaryKey;
         /// <summary>
-        /// Slacker Object to DataTable Converter
+        /// Return Primary Key Fields 
         /// </summary>
-        public DataTableConverter<T> DataTableConverter {
+        public List<DataModelField> PrimaryKey {
             get {
-                if (_datatableConverter == null) {
-                    _datatableConverter = new DataTableConverter<T>();
+                if (_primaryKey == null) {
+                    _primaryKey = Fields.Where(
+                        field => field.IsPrimaryKeyField
+                    ).ToList();
                 }
-                return _datatableConverter;
+                return _primaryKey;
             }
         }
+
+        private List<DataModelField> _nonKeyFields;
+        /// <summary>
+        /// Return NonKey Fields
+        /// </summary>
+        public List<DataModelField> NonKeyFields {
+            get {
+                if (_nonKeyFields == null) {
+                    _nonKeyFields = Fields.Where(
+                        field => !field.IsPrimaryKeyField
+                    ).ToList();
+                }
+                return _nonKeyFields;
+            }
+        }
+
+
 
         /// <summary>
         /// Enable this setting to allow this model to use delete
@@ -312,29 +334,19 @@ namespace Slacker {
         /// Enable this setting to allow global updates on this service
         /// </summary>
         public bool AllowGlobalUpdates { get; set; }
-        
+
         /// <summary>
         /// The SQLConnection for this DataService
         /// </summary>
         public SqlConnection Connection { get; set; }
 
         /// <summary>
-        /// Table key fields
+        /// Contains DataField info
         /// </summary>
-        public List<string> PrimaryKey { get; set; }
+        public List<DataModelField> Fields { get; protected set; }
 
-        /// <summary>
-        /// Table Fields
-        /// TableColumn -> ModelProperty
-        /// </summary>
-        public Dictionary<string, string> Fields { get; private set; }
 
-        /// <summary>
-        /// Table Non-Key Fields
-        /// TableColumn -> ModelProperty
-        /// </summary>
-        public Dictionary<string, string> NonKeyFields { get; private set; }
-
+        
 
         /// <summary>
         /// Initializes a new DataService with a given connection
@@ -343,30 +355,14 @@ namespace Slacker {
         public DataService(SqlConnection sqlConnection = null) {
             this.Connection = sqlConnection;
 
-            // Get Model Properties
-            var props = typeof(T).GetProperties(
-                BindingFlags.Instance | BindingFlags.Public
-            ).ToList();
-            
             // Register Fields
-            this.PrimaryKey = new List<string>();
-            this.Fields = new Dictionary<string, string>();
-            this.NonKeyFields = new Dictionary<string, string>();
-            //  
-            props.ForEach(propInfo => {
-                var field = propInfo.GetCustomAttribute<Field>();
-                if (field == null) {
-                    Fields.Add(propInfo.Name, propInfo.Name);
-                    return;
-                }
-
-                // Ignored Fields
-                if (field.Ignored) {
-                    return;
-                }
-                
-                Fields.Add(field.Name ?? propInfo.Name, propInfo.Name);
-            });
+            this.Fields = typeof(T).GetFields(
+                BindingFlags.Instance | BindingFlags.Public
+            ).Select(
+                fieldInfo => new DataModelField(fieldInfo)
+            ).Where(
+                dataField => !dataField.IsIgnored    
+            ).ToList();
             
             // Add DataService as managing service for model (T)
             SERVICE_REGISTRY.Register(typeof(T), this);
@@ -425,11 +421,34 @@ namespace Slacker {
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="param"></param>
-        /// <param name="fields">The fields to be updated or null for all</param>
+        /// <param name="model"></param>
+        /// <param name="tableFieldsToUpdate">The fields to be updated or null for all</param>
         /// <param name="where">The condition or null for all</param>
-        public void Update(object param, string[] fields = null, string where = null) {
-            throw new NotImplementedException();
+        public void Update(object model, string[] tableFieldsToUpdate = null, string where = null, dynamic whereObj = null) {
+            
+            // Build combined parameter object
+            var param = new DynamicParameters(model);
+            if(whereObj != null) { 
+                param.AddDynamicParams(whereObj);
+            }
+            
+            // If fields is null and model is dynamic (IDictionary), use model keys
+            if (tableFieldsToUpdate == null && model is IDictionary<string, object>) {
+                tableFieldsToUpdate = (model as IDictionary<string, object>).Keys.ToArray();
+            }
+
+            // If fields is null, use all NonKeyFields else map Fields by tableFieldsToUpdate
+            var updateFields = tableFieldsToUpdate == null ? NonKeyFields : Fields.Where(
+                field => tableFieldsToUpdate.Contains(field.TableField)
+            );
+
+            var updateFieldStr = string.Join(", ", (updateFields.Select(
+                field => $"[{field.TableField}]=@{field.ModelField}"
+            )));
+
+            // Do Update
+            string update = $@"UPDATE {Table} SET {updateFieldStr} WHERE {where ?? DefaultCondition}";
+            Connection.Execute(update, param);
         }
         
         public override void Delete(T model) {
@@ -456,10 +475,35 @@ namespace Slacker {
             Connection.Execute(query + " WHERE " + where, whereParam);
         }
         #endregion
-        
-        
+
+
 
         #region Helper Methods
+        public DataTable ConvertDataModelsToDataTable(IEnumerable<dynamic> models) {
+            var dataTable = new DataTable(Table);
+
+            // Build DataTable Structure
+            var columns = Fields.Select(dataField => new DataColumn(
+                    dataField.TableField,
+                    dataField.ModelFieldType
+            ));
+            dataTable.Columns.AddRange(columns.ToArray());
+
+            // DataModel -> DataRow Conversion
+            models.Cast<IDictionary<string, object>>().ToList().ForEach(
+                dataModel => dataTable.Rows.Add(
+                    // Get Values from Model
+                    Fields.Select(field => 
+                        dataModel.TryGetValue(
+                            field.ModelField, out object value
+                        ) ? value : null
+                    )
+                )
+            );
+
+            return dataTable;
+        }
+
         /// <summary>
         /// Retrieves a registered DataService for Model
         /// </summary>
