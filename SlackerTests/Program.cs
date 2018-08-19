@@ -19,7 +19,6 @@ namespace SlackerTests {
                 SlackerFlags.ON_EXCEPTION_THROW;
 
             // TODO: Setup Test Connection
-            SlackerApp.Initialize(slackerFlags, null);
 
         }
 

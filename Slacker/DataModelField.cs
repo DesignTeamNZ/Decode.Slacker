@@ -18,10 +18,10 @@ namespace Slacker {
         public Type ModelFieldType { get; protected set; }
         public Field FieldAttribute { get; protected set; }
 
-        public DataModelField(FieldInfo field) {
-            FieldAttribute = field.GetCustomAttribute<Field>();
+        public DataModelField(MemberInfo memberField) {
+            FieldAttribute = memberField.GetCustomAttribute<Field>();
             if (FieldAttribute == null) {
-                TableField = ModelField = field.Name;
+                TableField = ModelField = memberField.Name;
                 return;
             }
 
@@ -32,8 +32,8 @@ namespace Slacker {
             
             // Load Properties
             IsPrimaryKeyField = FieldAttribute.IsPrimary;
-            TableField = FieldAttribute.Name ?? field.Name;
-            ModelField = field.Name;
+            TableField = FieldAttribute.Name ?? memberField.Name;
+            ModelField = memberField.Name;
         }
 
     }

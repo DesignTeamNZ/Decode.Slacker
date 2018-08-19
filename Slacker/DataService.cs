@@ -40,26 +40,7 @@ namespace Slacker {
         /// </summary>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
         public IEnumerable<T> SelectAll() {
-            return Select("", false);
-        }
-        
-        /// <summary>
-        /// Select using Expression and Parameter Object
-        /// </summary>
-        /// <param name="predicate"></param>
-        /// <param name="whereParam"></param>
-        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        public IEnumerable<T> Select(Expression<Func<T, bool>> predicate, object whereParam) {
-            return Select(Condition.Where<T>(predicate, whereParam));
-        }
-
-        /// <summary>
-        /// Perform a select query with Condition
-        /// </summary>
-        /// <param name="where">The where condition</param>
-        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        public IEnumerable<T> Select(Condition where) {
-            return Select(where.QueryString, where.Parameters);
+            return SelectWhere("", false);
         }
         
         /// <summary>
@@ -75,7 +56,7 @@ namespace Slacker {
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
         /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
-        public abstract IEnumerable<T> Select(string where, object whereParam);
+        public abstract IEnumerable<T> SelectWhere(string where, object whereParam);
         #endregion
 
         #region Update
@@ -83,13 +64,6 @@ namespace Slacker {
         #endregion
 
         #region Delete
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="where"></param>
-        public void Delete(Condition where) {
-            Delete(where.QueryString, where.Parameters);
-        }
 
         /// <summary>
         /// 
@@ -107,7 +81,7 @@ namespace Slacker {
 
     }
 
-    public class DataService<T> : DataServiceProvider<T> where T : DataModel {
+    public abstract class DataService<T> : DataServiceProvider<T> where T : DataModel {
 
         private static ServiceRegistry _serviceRegistry;
         /// <summary>
@@ -195,7 +169,7 @@ namespace Slacker {
             get {
                 if (_querySelects == null) {
                     _querySelects = string.Join(",",
-                        NonKeyFields.Select(
+                        Fields.Select(
                             field => $"[{Alias}].[{field.TableField}] AS [{field.ModelField}]"
                         )
                     );
@@ -229,7 +203,7 @@ namespace Slacker {
         /// </summary>
         public Table TableAttribute {
             get {
-                if (_tableAttributeSearched) {
+                if (!_tableAttributeSearched) {
                     _tableAttribute = typeof(T).GetCustomAttribute<Table>();
                     _tableAttributeSearched = true;
                 }
@@ -345,7 +319,11 @@ namespace Slacker {
         /// </summary>
         public List<DataModelField> Fields { get; protected set; }
 
-
+        /// <summary>
+        /// Initializes a new DataService with a given connection string
+        /// </summary>
+        /// <param name="connStr">The Connection String</param>
+        public DataService(string connStr) : this(new SqlConnection(connStr)) {}
         
 
         /// <summary>
@@ -355,13 +333,15 @@ namespace Slacker {
         public DataService(SqlConnection sqlConnection = null) {
             this.Connection = sqlConnection;
 
-            // Register Fields
-            this.Fields = typeof(T).GetFields(
-                BindingFlags.Instance | BindingFlags.Public
+            // Register Fields/Properties
+            // Potential TODO: Replace with FastMember
+            var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
+            this.Fields = typeof(T).GetFields(bindingFlags).Cast<MemberInfo>().Concat(
+                typeof(T).GetProperties(bindingFlags)
             ).Select(
-                fieldInfo => new DataModelField(fieldInfo)
+                memberInfo => new DataModelField(memberInfo)
             ).Where(
-                dataField => !dataField.IsIgnored    
+                dataField => !dataField.IsIgnored
             ).ToList();
             
             // Add DataService as managing service for model (T)
@@ -376,8 +356,8 @@ namespace Slacker {
             // Build Insert Query
             if(_insertQuery == null) { 
                 _insertQuery = $@"
-                    INSERT INTO [{Table}] [{Alias}] ({QueryNonKeyFieldCols}) 
-                    VALUES  {QueryNonKeyModelRefs};";
+                    INSERT INTO [{Table}] ({QueryNonKeyFieldCols}) 
+                    VALUES ({QueryNonKeyModelRefs});";
             }
 
             // Do Insert
@@ -388,34 +368,39 @@ namespace Slacker {
         }
         
         public override IEnumerable<T> SelectByKey(object whereParam) {
-            return Select(DefaultCondition, whereParam);
+            return SelectWhere(DefaultCondition, whereParam);
         }
         
         private string _selectQuery;
-        public override IEnumerable<T> Select(string where, object whereParam) {
+        public override IEnumerable<T> SelectWhere(string where, object whereParam) {
             // Build Query
             if (_selectQuery == null) {
-                _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}]";
+                _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}] [{Alias}]";
             }
-
-            // Select all if no condition
-            if (string.IsNullOrEmpty(where)) {
-                return Connection.Query<T>(_selectQuery, null);
-            }
-
+            
             // Select with condition
-            return Connection.Query<T>(
-                _selectQuery + " WHERE " + where, 
+            var results = Connection.Query<T>(
+                _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
                 whereParam
             );
+
+            // Clear model changes
+            results.ToList().ForEach(
+                res => res.ClearChangeTracking()
+            );
+
+            return results;
         }
 
         /// <summary>
-        /// Updates a model using default condition chang
+        /// Updates a model using default condition change
         /// </summary>
         /// <param name="model"></param>
-        public void Update(T model, bool onlyChanged = true) {
-            throw new NotImplementedException();
+        /// <param name="onlyChanged">Only update changed fields on the model</param>
+        public void Update(T model, bool updateOnlyChangedProperties = true) {
+
+
+
         }
 
         /// <summary>
@@ -449,6 +434,7 @@ namespace Slacker {
             // Do Update
             string update = $@"UPDATE {Table} SET {updateFieldStr} WHERE {where ?? DefaultCondition}";
             Connection.Execute(update, param);
+            
         }
         
         public override void Delete(T model) {
@@ -509,8 +495,8 @@ namespace Slacker {
         /// </summary>
         /// <typeparam name="M">The DataModel Type</typeparam>
         /// <returns>The responsible DataService for given Model M</returns>
-        public static DataService<ST> GetModelService<ST>() where ST: DataModel  {
-            return (DataService<ST>) SERVICE_REGISTRY.GetService(typeof(ST));
+        public static DataService<T> GetModelService() {
+            return (DataService<T>) SERVICE_REGISTRY.GetService(typeof(T));
         }
         #endregion
 

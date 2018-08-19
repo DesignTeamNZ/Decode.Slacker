@@ -2,6 +2,7 @@
 using Slacker.Helpers.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,15 +13,21 @@ namespace SlackerTests
     /// <summary>
     /// Example UserDataService for User DataModel
     /// </summary>
-    public class UserDataService : DataService<User> { }
+    public class UserDataService : DataService<UserModel> {
+
+        public UserDataService(string conn) : base(conn) { }
+        public UserDataService(SqlConnection conn) : base(conn) { }
+
+    }
 
     /// <summary>
     /// Example User DataModel
     /// </summary>
-    public class User : DataModel {
+    [Table("Users", "u")]
+    public class UserModel : DataModel {
 
         [Field(IsPrimary = true)]
-        public int ID { get; private set; }
+        public int Id { get; protected set; }
 
         private string _username;
         private string _password;
