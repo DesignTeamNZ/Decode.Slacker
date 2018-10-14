@@ -12,27 +12,27 @@ namespace Slacker {
     public class SlackerApp {
         
         
-        public static void InitializeDataServices(Func<Type, bool> filter, object conn) {
-            var services = GetAllDataServices();
+        public static void InitializeDataServices(Func<Type, bool> filter, SqlConnection conn) {
+
             foreach (Type type in GetAllDataServices()) {
                 if (filter != null && !filter(type)) {
-                    continue;
-                }
 
-                var constructor = type.GetConstructors().FirstOrDefault(
-                    construc => {
-                        var parameters = construc.GetParameters();
-                        return parameters.Count() == 1 && 
-                            parameters[0].ParameterType == conn.GetType();
+                    var constructor = type.GetConstructors().FirstOrDefault(
+                        constr => {
+                            var prams = constr.GetParameters();
+                            return prams.Count() == 1 
+                                && prams[0].ParameterType.IsAssignableFrom(typeof(SqlConnection));
+                        }
+                    );
+
+                    if (constructor == null) {
+                        throw new Exception($"Could not initialize DS '{type.Name}'. " + 
+                            $"DataSource requires a constructor that takes " +
+                            $"only '{ typeof(SqlConnection) }' argument.");
                     }
-                );
 
-                if (constructor == null) {
-                    throw new Exception($"Could not initialize DS '{type.Name}'. "
-                        + $"DS requires a constructor that takes only '{conn.GetType()}' argument.");
+                    constructor.Invoke(new object[] { conn });
                 }
-
-                constructor.Invoke(new object[] { conn });
             }
         }
 
@@ -43,19 +43,11 @@ namespace Slacker {
                     typ => typeof(IDataService).IsAssignableFrom(typ) 
                         && !typ.IsAbstract
                         && !typ.IsInterface
-                        
                 )
                 select types;
         }
 
     }
-
-    [Flags]
-    public enum SlackerFlags {
-        PRE_LOOKUP_MODELS = 1,
-        PRE_INITIALIZE_DATASERVICES = 2,
-        ON_EXCEPTION_THROW = 3,
-        ON_EXCEPTION_DISPLAY_MESSAGEBOX = 4
-    }
+    
 
 }

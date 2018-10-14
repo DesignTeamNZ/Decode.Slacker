@@ -14,10 +14,7 @@ namespace SlackerTests
     /// Example UserDataService for User DataModel
     /// </summary>
     public class UserDataService : DataService<UserModel> {
-
-        public UserDataService(string conn) : base(conn) { }
         public UserDataService(SqlConnection conn) : base(conn) { }
-
     }
 
     /// <summary>
@@ -27,12 +24,10 @@ namespace SlackerTests
     public class UserModel : DataModel {
 
         [Field(IsPrimary = true)]
-        public int Id { get; protected set; }
+        public int? Id { get; set; }
+
 
         private string _username;
-        private string _password;
-        private string _email;
-
         public string Username {
             get {
                 return _username;
@@ -43,6 +38,7 @@ namespace SlackerTests
             }
         }
 
+        private string _password;
         public string Password {
             get {
                 return _password;
@@ -52,7 +48,8 @@ namespace SlackerTests
                 PropChanged();
             }
         }
-        
+
+        private string _email;
         public string Email {
             get {
                 return _email;

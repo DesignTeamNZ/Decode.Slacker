@@ -9,6 +9,22 @@ namespace Slacker.Helpers.Attributes
     public class Field : System.Attribute {
         public string Name { get; set; }
         public bool IsPrimary { get; set; }
+
+        private bool? _isGenerated;
+        /// <summary>
+        /// Whether this Field is a generated key field. Defaults to IsPrimary unless specifically set
+        /// </summary>
+        public bool IsGenerated {
+            get {
+                if (!_isGenerated.HasValue) {
+                    return IsPrimary;
+                }
+
+                return _isGenerated.Value;
+            }
+        }
+
+
         public bool Ignored { get; set; }
     }
 }

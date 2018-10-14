@@ -9,6 +9,7 @@ using Slacker.Helpers.Attributes;
 using System.Linq.Expressions;
 using System.Data;
 using System.Dynamic;
+using FastMember;
 
 namespace Slacker {
 
@@ -16,22 +17,22 @@ namespace Slacker {
         // todo
     }
 
-    public abstract class DataServiceProvider<T> : IDataService where T: DataModel {
+    public abstract class DataServiceProvider<T> : IDataService where T: DataModel, new() {
 
         #region Insert
         /// <summary>
         /// Perform insert query using data model
         /// </summary>
         /// <param name="model">The Model</param>
-        public void Insert(T model) {
-            Insert(new[] { model });
+        public void Insert(T model, bool loadGeneratedKeys = true) {
+            Insert(new[] { model }, loadGeneratedKeys);
         }
 
         /// <summary>
         /// Perform insert query using data model(s)
         /// </summary>
         /// <param name="models">The Models</param>
-        public abstract void Insert(params T[] models);
+        public abstract void Insert(T[] models, bool loadGeneratedKeys = true);
         #endregion
 
         #region Select
@@ -81,7 +82,7 @@ namespace Slacker {
 
     }
 
-    public abstract class DataService<T> : DataServiceProvider<T> where T : DataModel {
+    public abstract class DataService<T> : DataServiceProvider<T> where T : DataModel, new() {
 
         private static ServiceRegistry _serviceRegistry;
         /// <summary>
@@ -93,6 +94,20 @@ namespace Slacker {
                     _serviceRegistry = new ServiceRegistry();
                 }
                 return _serviceRegistry;
+            }
+        }
+
+
+        private TypeAccessor _typeAccessor;
+        /// <summary>
+        /// FastMember TypeAccessor for T
+        /// </summary>
+        public TypeAccessor TypeAccessor {
+            get {
+                if (_typeAccessor == null) {
+                    _typeAccessor = TypeAccessor.Create(typeof(T));
+                }
+                return _typeAccessor;
             }
         }
 
@@ -119,7 +134,7 @@ namespace Slacker {
             get {
                 if (_queryNonKeyFieldCols == null) {
                     _queryNonKeyFieldCols = string.Join(",",
-                        NonKeyFields.Select(
+                        NonGeneratedFields.Select(
                             field => $@"[{field.TableField}]"
                         )
                     );
@@ -147,11 +162,11 @@ namespace Slacker {
         /// <summary>
         /// Returns a pre-generated field string for table non-key fields
         /// </summary>
-        public string QueryNonKeyModelRefs {
+        public string QueryNonKeyGeneratedModelRefs {
             get {
                 if (_queryNonKeyModelRefs == null) {
                     _queryNonKeyModelRefs = string.Join(",",
-                        NonKeyFields.Select(
+                        NonGeneratedFields.Select(
                             field => $"@{field.ModelField}"
                         )
                     );
@@ -186,7 +201,7 @@ namespace Slacker {
             get {
                 if (_queryDefaultUpdateRefs == null) {
                     _queryDefaultUpdateRefs = string.Join(",",
-                        NonKeyFields.Select(
+                        NonGeneratedFields.Select(
                             field => $@"[{Alias}].[{field.TableField}] = @{field.ModelField}"
                         )
                     );
@@ -270,25 +285,25 @@ namespace Slacker {
             get {
                 if (_primaryKey == null) {
                     _primaryKey = Fields.Where(
-                        field => field.IsPrimaryKeyField
+                        field => field.IsPrimary
                     ).ToList();
                 }
                 return _primaryKey;
             }
         }
 
-        private List<DataModelField> _nonKeyFields;
+        private List<DataModelField> _nonGeneratedFields;
         /// <summary>
         /// Return NonKey Fields
         /// </summary>
-        public List<DataModelField> NonKeyFields {
+        public List<DataModelField> NonGeneratedFields {
             get {
-                if (_nonKeyFields == null) {
-                    _nonKeyFields = Fields.Where(
-                        field => !field.IsPrimaryKeyField
+                if (_nonGeneratedFields == null) {
+                    _nonGeneratedFields = Fields.Where(
+                        field => !field.IsGenerated
                     ).ToList();
                 }
-                return _nonKeyFields;
+                return _nonGeneratedFields;
             }
         }
 
@@ -302,7 +317,7 @@ namespace Slacker {
         /// <summary>
         /// Enable this setting to allow this model to use delete all
         /// </summary>
-        public bool AllowDeleteAll { get; set; }
+        public bool AllowGlobalDelete { get; set; }
 
         /// <summary>
         /// Enable this setting to allow global updates on this service
@@ -318,14 +333,7 @@ namespace Slacker {
         /// Contains DataField info
         /// </summary>
         public List<DataModelField> Fields { get; protected set; }
-
-        /// <summary>
-        /// Initializes a new DataService with a given connection string
-        /// </summary>
-        /// <param name="connStr">The Connection String</param>
-        public DataService(string connStr) : this(new SqlConnection(connStr)) {}
         
-
         /// <summary>
         /// Initializes a new DataService with a given connection
         /// </summary>
@@ -336,9 +344,7 @@ namespace Slacker {
             // Register Fields/Properties
             // Potential TODO: Replace with FastMember
             var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
-            this.Fields = typeof(T).GetFields(bindingFlags).Cast<MemberInfo>().Concat(
-                typeof(T).GetProperties(bindingFlags)
-            ).Select(
+            this.Fields = typeof(T).GetProperties(bindingFlags).Select(
                 memberInfo => new DataModelField(memberInfo)
             ).Where(
                 dataField => !dataField.IsIgnored
@@ -351,19 +357,34 @@ namespace Slacker {
 
         #region CRUD Functions
         private string _insertQuery;
-        public override void Insert(params T[] models) {
+        public override void Insert(T[] models, bool loadGeneratedKeys = true) {
 
             // Build Insert Query
             if(_insertQuery == null) { 
                 _insertQuery = $@"
                     INSERT INTO [{Table}] ({QueryNonKeyFieldCols}) 
-                    VALUES ({QueryNonKeyModelRefs});";
+                    VALUES ({QueryNonKeyGeneratedModelRefs});";
             }
 
+            var autoIncField = PrimaryKey.FirstOrDefault(
+                pk => pk.FieldAttribute.IsGenerated
+            );
+
             // Do Insert
-            // todo Execute Multiple
             foreach (var model in models) {
-                Connection.Execute(_insertQuery, model);
+                if (autoIncField == null || !loadGeneratedKeys) {
+                    Connection.Execute(_insertQuery, model);
+                    continue;
+                }
+
+                // Update and save generated id to model
+                var id = Connection.Query<int>(
+                    _insertQuery + @"SELECT CAST(SCOPE_IDENTITY() as int)",
+                    model
+                ).Single();
+
+                TypeAccessor[model, autoIncField.ModelField] = id;
+                model.ChangedProperties.Clear();
             }
         }
         
@@ -386,54 +407,73 @@ namespace Slacker {
 
             // Clear model changes
             results.ToList().ForEach(
-                res => res.ClearChangeTracking()
+                res => res.ChangedProperties.Clear()
             );
 
             return results;
         }
 
         /// <summary>
-        /// Updates a model using default condition change
+        /// Updates from model using default primary key condition 
         /// </summary>
         /// <param name="model"></param>
         /// <param name="onlyChanged">Only update changed fields on the model</param>
         public void Update(T model, bool updateOnlyChangedProperties = true) {
+            if (updateOnlyChangedProperties) {
+                if (model.ChangedProperties.Count < 1) {
+                    return;
+                }
 
+                Update(model, model.ChangedProperties);
+                return;
+            }
 
-
+            Update(model);
         }
 
         /// <summary>
-        /// 
+        /// Updates from model
         /// </summary>
-        /// <param name="model"></param>
-        /// <param name="tableFieldsToUpdate">The fields to be updated or null for all</param>
+        /// <param name="model">T or anonymous Object (Uses reflection unless updateFields is set)</param>
+        /// <param name="updateFields">The fields to be updated or null for all</param>
         /// <param name="where">The condition or null for all</param>
-        public void Update(object model, string[] tableFieldsToUpdate = null, string where = null, dynamic whereObj = null) {
+        /// <param name="whereObj">Additional where object</param>
+        public void Update(object model, IEnumerable<string> updateFields = null, 
+            string where = null, object whereObj = null) {
             
             // Build combined parameter object
             var param = new DynamicParameters(model);
             if(whereObj != null) { 
                 param.AddDynamicParams(whereObj);
             }
-            
-            // If fields is null and model is dynamic (IDictionary), use model keys
-            if (tableFieldsToUpdate == null && model is IDictionary<string, object>) {
-                tableFieldsToUpdate = (model as IDictionary<string, object>).Keys.ToArray();
+
+            // If fields is null and model is anonymous object, lookup properties.
+            if (updateFields == null && !(model is T)) {
+                updateFields = model.GetType().GetMembers().Select(
+                    m => m.Name
+                );
             }
 
             // If fields is null, use all NonKeyFields else map Fields by tableFieldsToUpdate
-            var updateFields = tableFieldsToUpdate == null ? NonKeyFields : Fields.Where(
-                field => tableFieldsToUpdate.Contains(field.TableField)
+            var updateFieldsInfo = updateFields == null ? NonGeneratedFields : Fields.Where(
+                field => updateFields.Contains(field.TableField)
             );
 
-            var updateFieldStr = string.Join(", ", (updateFields.Select(
-                field => $"[{field.TableField}]=@{field.ModelField}"
+            var updateFieldStr = string.Join(", ", (updateFieldsInfo.Select(
+                field => $"[{Alias}].[{field.TableField}]=@{field.ModelField}"
             )));
 
             // Do Update
-            string update = $@"UPDATE {Table} SET {updateFieldStr} WHERE {where ?? DefaultCondition}";
-            Connection.Execute(update, param);
+            string update = $@"
+                UPDATE [{Alias}] SET {updateFieldStr}
+                FROM [{Table}] [{Alias}]
+                WHERE {where ?? DefaultCondition}";
+
+            Connection.Execute(update, model);
+
+            if (model is DataModel) {
+                ((DataModel) model).ChangedProperties.Clear();
+            }
             
         }
         
@@ -446,7 +486,7 @@ namespace Slacker {
 
             if (string.IsNullOrEmpty(where)) {
                 // Runtime "Sanity" Check
-                if (!AllowDeleteAll) {
+                if (!AllowGlobalDelete) {
                     throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
                 }
                 // Delete All

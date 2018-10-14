@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Slacker.Helpers.Attributes;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,43 +10,42 @@ using System.Threading.Tasks;
 namespace Slacker {
 
     public interface IDataModel {
-        void PropChanged([CallerMemberName] string propertyName = "");
+
     }
     
-    public class DataModel {
+    public class DataModel : IDataModel {
 
         /// <summary>
         /// Keeps track of what properties were changed on Model
         /// </summary>
-        protected List<String> ChangedProperties = new List<String>();
+        [Field(Ignored = true)]
+        public IList<string> ChangedProperties { get; set; }
+
+        /// <summary>
+        /// Enables/Disables change tracking.
+        /// </summary>
+        [Field(Ignored = true)]
+        public bool ChangeTracking { get; set; } = true;
         
         /// <summary>
         /// Used to notify DataService of what properties were changed on this model
         /// </summary>
         /// <param name="propertyName">Name of property</param>
-        protected void PropChanged([CallerMemberName] String propertyName = "") {
+        protected void PropChanged([CallerMemberName] string propertyName = null) {
+            if (propertyName == null || !ChangeTracking) {
+                return;
+            }
+
+            if (ChangedProperties == null) {
+                ChangedProperties = new List<string>();
+            }
+ 
             if (ChangedProperties.Contains(propertyName)) {
                 return; 
             }
             
             ChangedProperties.Add(propertyName);
         }
-
-        /// <summary>
-        /// Resets change tracking on a given model
-        /// </summary>
-        public void ClearChangeTracking() {
-            ChangedProperties.Clear();
-        }
-
-        /// <summary>
-        /// Gets a list of changed fields for a given model
-        /// </summary>
-        /// <returns></returns>
-        public List<String> GetChangedFields() {
-            return ChangedProperties;
-        }
-
     }
     
 }

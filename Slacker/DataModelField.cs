@@ -8,15 +8,28 @@ using System.Threading.Tasks;
 
 namespace Slacker {
     public class DataModelField {
-
-        public bool IsKeyField { get; protected set; }
-        public bool IsPrimaryKeyField { get; protected set; }
-        public bool IsIgnored { get; protected set; }
-
+        
         public string TableField { get; protected set; }
         public string ModelField { get; protected set; }
+
         public Type ModelFieldType { get; protected set; }
         public Field FieldAttribute { get; protected set; }
+        
+        public bool IsPrimary {
+            get {
+                return FieldAttribute?.IsPrimary ?? false;
+            }
+        }
+        public bool IsIgnored {
+            get {
+                return FieldAttribute?.Ignored ?? false;
+            }
+        }
+        public bool IsGenerated {
+            get {
+                return FieldAttribute?.IsGenerated ?? false;
+            }
+        }
 
         public DataModelField(MemberInfo memberField) {
             FieldAttribute = memberField.GetCustomAttribute<Field>();
@@ -24,14 +37,8 @@ namespace Slacker {
                 TableField = ModelField = memberField.Name;
                 return;
             }
-
-            if (FieldAttribute.Ignored) {
-                IsIgnored = true;
-                return;
-            }
             
             // Load Properties
-            IsPrimaryKeyField = FieldAttribute.IsPrimary;
             TableField = FieldAttribute.Name ?? memberField.Name;
             ModelField = memberField.Name;
         }

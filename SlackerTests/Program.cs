@@ -6,19 +6,37 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace SlackerTests {
     class Program {
 
-        [STAThread]
+        public const string CONN_STR = @"Server=localhost\SQLEXPRESS;Database=SlackerDevelopment;Trusted_Connection=True;";
+
         static void Main(string[] args) {
 
-            SlackerFlags slackerFlags =
-                SlackerFlags.PRE_LOOKUP_MODELS |
-                SlackerFlags.PRE_INITIALIZE_DATASERVICES |
-                SlackerFlags.ON_EXCEPTION_THROW;
+            var connection = new SqlConnection(CONN_STR);
+            connection.OpenAsync().Wait();
 
-            // TODO: Setup Test Connection
+            SlackerApp.InitializeDataServices(
+                (type) => type == typeof(UserModel),
+                connection
+            );
+
+            var service = DataService<UserModel>.GetModelService();
+            var insertModel = new UserModel() {
+                Username = "TestUser",
+                Password = "TestPass",
+                Email = "test@localhost"
+            };
+
+            service.Insert(insertModel);
+
+
+            insertModel.Password = "NewPasswordTest";
+            service.Update(insertModel);
+
+            return;
 
         }
 
