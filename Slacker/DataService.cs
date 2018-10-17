@@ -14,7 +14,15 @@ using System.Threading.Tasks;
 
 namespace Slacker {
 
-    public interface IDataService<T> where T : DataModel, new() {
+    /// <summary>
+    /// Used as a marker for reflection. Cast to IDataService<T> to use.
+    /// </summary>
+    public interface IDataService { }
+    /// <summary>
+    /// Represents a Slacker DataService manager
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public interface IDataService<T> : IDataService where T : DataModel, new() {
         #region Insert
         /// <summary>
         /// Perform an insert query using data model

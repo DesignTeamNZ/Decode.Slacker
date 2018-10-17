@@ -11,9 +11,10 @@ namespace Slacker {
 
     public class SlackerApp {
         
-        
+        /// <summary>
+        /// Initalize all dataservices matching a specific type filter with SqlConnection
+        /// </summary>
         public static void InitializeDataServices(Func<Type, bool> filter, SqlConnection conn) {
-
             foreach (Type type in GetAllDataServices()) {
                 if (filter != null && !filter(type)) {
 
@@ -46,8 +47,5 @@ namespace Slacker {
                 )
                 select types;
         }
-
     }
-    
-
 }

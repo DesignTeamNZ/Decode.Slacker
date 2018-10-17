@@ -19,7 +19,8 @@ namespace SlackerTests {
             connection.OpenAsync().Wait();
 
             SlackerApp.InitializeDataServices(
-                (type) => type == typeof(UserModel),
+                (type) => {
+                    return type == typeof(UserModel); },
                 connection
             );
 
@@ -27,8 +28,8 @@ namespace SlackerTests {
         }
 
         static void TestSelect() {
-            var service = DataService<UserModel>.GetModelService();
-            var results = service.SelectWhere("Username=@Username", new {
+            var service = DataService<UserModel>.GetService();
+            var results = service.Select("Username=@Username", new {
                 Username = "TestUser"
             });
 
@@ -37,7 +38,7 @@ namespace SlackerTests {
 
         static void TestInsertUpdate() { 
 
-            var service = DataService<UserModel>.GetModelService();
+            var service = DataService<UserModel>.GetService();
             var insertModel = new UserModel() {
                 Username = "TestUser",
                 Password = "TestPass",
