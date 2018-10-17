@@ -10,74 +10,207 @@ using System.Linq.Expressions;
 using System.Data;
 using System.Dynamic;
 using FastMember;
+using System.Threading.Tasks;
 
 namespace Slacker {
 
-    public interface IDataService {
-        // todo
-    }
-
-    public abstract class DataServiceProvider<T> : IDataService where T: DataModel, new() {
-
+    public interface IDataService<T> where T : DataModel, new() {
         #region Insert
         /// <summary>
-        /// Perform insert query using data model
+        /// Perform an insert query using data model
         /// </summary>
-        /// <param name="model">The Model</param>
-        public void Insert(T model, bool loadGeneratedKeys = true) {
-            Insert(new[] { model }, loadGeneratedKeys);
-        }
-
+        /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
+        void Insert(T model, bool loadGeneratedKeys = true);
         /// <summary>
-        /// Perform insert query using data model(s)
+        /// Perform an insert query using data model(s)
         /// </summary>
-        /// <param name="models">The Models</param>
-        public abstract void Insert(T[] models, bool loadGeneratedKeys = true);
+        /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
+        void Insert(T[] models, bool loadGeneratedKeys = true);
+        /// <summary>
+        /// Perform an async insert query using data model
+        /// </summary>
+        /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
+        Task InsertAsync(T model, bool loadGeneratedKeys = true);
+        /// <summary>
+        /// Perform an async insert query using data model(s)
+        /// </summary>
+        /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
+        Task InsertAsync(T[] models, bool loadGeneratedKeys = true);
         #endregion
-
         #region Select
         /// <summary>
         /// Select all records
         /// </summary>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        public IEnumerable<T> SelectAll() {
-            return SelectWhere("", false);
-        }
-        
+        IEnumerable<T> SelectAll();
         /// <summary>
-        /// Selects using a default condition with param object
+        /// Perform an async select using a default condition (Primary Key) with parameter object
         /// </summary>
         /// <param name="whereParam"></param>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        public abstract IEnumerable<T> SelectByKey(object whereParam);
-
+        IEnumerable<T> Find(object whereParam);
         /// <summary>
-        /// Perform a select query with Condition
+        /// Perform an select query with Condition
         /// </summary>
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
         /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
-        public abstract IEnumerable<T> SelectWhere(string where, object whereParam);
+        IEnumerable<T> Select(string where, object whereParam);
+        /// <summary>
+        /// Select all records async
+        /// </summary>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        Task<IEnumerable<T>> SelectAllAsync();
+        /// <summary>
+        /// Perform an async select using a default condition (Primary Key) with parameter object
+        /// </summary>
+        /// <param name="whereParam"></param>
+        /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
+        Task<IEnumerable<T>> FindAsync(object whereParam);
+        /// <summary>
+        /// Perform an async select query with Condition
+        /// </summary>
+        /// <param name="where">Condition query</param>
+        /// <param name="whereParam">Condition parameter</param>
+        /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
+        Task<IEnumerable<T>> SelectAsync(string where, object whereParam);
+        #endregion
+        #region Update
+        /// Performs an update on data model using default primary key based condition
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="onlyChanged">Only update changed fields on the model</param>
+        void Update(T model, bool updateOnlyChangedProperties = true);
+        /// <summary>
+        /// Performs an update on object model
+        /// </summary>
+        /// <param name="model">T or anonymous Object (Uses reflection unless updateFields is set)</param>
+        /// <param name="updateFields">The fields to be updated or null for all</param>
+        /// <param name="where">The condition or null for all models (Requires UpdateAll Flag)</param>
+        /// <param name="whereObj">Provides an additional object for where condition specifically.</param>
+        void Update(object model, IEnumerable<string> updateFields = null, string where = null, object whereObj = null);
+        /// Performs an async update on data model using default primary key based condition
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="onlyChanged">Only update changed fields on the model</param>
+        Task UpdateAsync(T model, bool updateOnlyChangedProperties = true);
+        /// <summary>
+        /// Performs an async update on object model
+        /// </summary>
+        /// <param name="model">T or anonymous Object (Uses reflection unless updateFields is set)</param>
+        /// <param name="updateFields">The fields to be updated or null for all</param>
+        /// <param name="where">The condition or null for all models (Requires UpdateAll Flag)</param>
+        /// <param name="whereObj">Provides an additional object for where condition specifically.</param>
+        Task UpdateAsync(object model, IEnumerable<string> updateFields = null,
+            string where = null, object whereObj = null);
+        #endregion
+        #region Delete
+        /// <summary>
+        /// Delete a model by primary key
+        /// </summary>
+        void Delete(T model);
+        /// <summary>
+        /// Delete records based on condition and condition parameter
+        /// </summary>
+        /// <param name="where">Condition query</param>
+        /// <param name="whereParam">Condition parameter</param>
+        void Delete(string where, object whereParam);
+        /// <summary>
+        /// Async Delete a model by primary key
+        /// </summary>
+        Task DeleteAsync(T model);
+        /// <summary>
+        /// Async Delete records based on condition and condition parameter
+        /// </summary>
+        /// <param name="where">Condition query</param>
+        /// <param name="whereParam">Condition parameter</param>
+        Task DeleteAsync(string where, object whereParam);
+        #endregion
+
+    }
+
+    public abstract class DataServiceProvider<T> : IDataService<T> where T: DataModel, new() {
+        #region Insert
+        /// <inheritdoc />
+        public void Insert(T model, bool loadGeneratedKeys = true) {
+            InsertAsync(model, loadGeneratedKeys).Wait();
+        }
+        /// <inheritdoc />
+        public void Insert(T[] models, bool loadGeneratedKeys = true) {
+            InsertAsync(models, loadGeneratedKeys).Wait();
+        }
+        /// <inheritdoc />
+        public async Task InsertAsync(T model, bool loadGeneratedKeys = true) {
+            await InsertAsync(new[] { model }, loadGeneratedKeys);
+        }
+        /// <inheritdoc />
+        public abstract Task InsertAsync(T[] models, bool loadGeneratedKeys = true);
+        #endregion
+
+        #region Select
+        /// <inheritdoc />
+        public IEnumerable<T> SelectAll() {
+            return SelectAllAsync().Result;
+        }
+        /// <inheritdoc />
+        public IEnumerable<T> Find(object whereParam) {
+            return FindAsync(whereParam).Result;
+        }
+        /// <inheritdoc />
+        public IEnumerable<T> Select(string where, object whereParam) {
+            return SelectAsync(where, whereParam).Result;
+        }
+        /// <inheritdoc />
+        public async Task<IEnumerable<T>> SelectAllAsync() {
+            return await SelectAsync("", false);
+        }
+        /// <inheritdoc />
+        public abstract Task<IEnumerable<T>> FindAsync(object whereParam);
+        /// <inheritdoc />
+        public abstract Task<IEnumerable<T>> SelectAsync(string where, object whereParam);
         #endregion
 
         #region Update
+        /// <inheritdoc />
+        public void Update(T model, bool updateOnlyChangedProperties = true) {
+            UpdateAsync(model, updateOnlyChangedProperties).Wait();
+        }
+        /// <inheritdoc />
+        public void Update(object model, IEnumerable<string> updateFields = null,
+            string where = null, object whereObj = null) {
+            UpdateAsync(model, updateFields, where, whereObj).Wait();
+        }
+        /// <inheritdoc />
+        public async Task UpdateAsync(T model, bool updateOnlyChangedProperties = true) {
+            if (updateOnlyChangedProperties) {
+                if (model.ChangedProperties.Count < 1) {
+                    return;
+                }
 
+                await UpdateAsync(model, model.ChangedProperties);
+                return;
+            }
+
+            await UpdateAsync(model);
+        }
+        /// <inheritdoc />
+        public abstract Task UpdateAsync(object model, IEnumerable<string> updateFields = null, 
+            string where = null, object whereObj = null);
         #endregion
 
         #region Delete
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="model"></param>
-        public abstract void Delete(T model);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="where"></param>
-        /// <param name="whereParam"></param>
-        public abstract void Delete(string where, object whereParam);
+        /// <inheritdoc />
+        public void Delete(T model) {
+            DeleteAsync(model).Wait();
+        }
+        /// <inheritdoc />
+        public void Delete(string where, object whereParam) {
+            DeleteAsync(where, whereParam).Wait();
+        }
+        /// <inheritdoc />
+        public abstract Task DeleteAsync(T model);
+        /// <inheritdoc />
+        public abstract Task DeleteAsync(string where, object whereParam);
         #endregion
 
     }
@@ -357,7 +490,8 @@ namespace Slacker {
 
         #region CRUD Functions
         private string _insertQuery;
-        public override void Insert(T[] models, bool loadGeneratedKeys = true) {
+        /// <inheritdoc />
+        public override async Task InsertAsync(T[] models, bool loadGeneratedKeys = true) {
 
             // Build Insert Query
             if(_insertQuery == null) { 
@@ -373,34 +507,36 @@ namespace Slacker {
             // Do Insert
             foreach (var model in models) {
                 if (autoIncField == null || !loadGeneratedKeys) {
-                    Connection.Execute(_insertQuery, model);
+                    await Connection.ExecuteAsync(_insertQuery, model);
                     continue;
                 }
 
                 // Update and save generated id to model
-                var id = Connection.Query<int>(
+                var results = await Connection.QueryAsync<int>(
                     _insertQuery + @"SELECT CAST(SCOPE_IDENTITY() as int)",
                     model
-                ).Single();
-
-                TypeAccessor[model, autoIncField.ModelField] = id;
+                );
+                
+                TypeAccessor[model, autoIncField.ModelField] = results.Single();
                 model.ChangedProperties.Clear();
             }
         }
-        
-        public override IEnumerable<T> SelectByKey(object whereParam) {
-            return SelectWhere(DefaultCondition, whereParam);
+
+        /// <inheritdoc />
+        public override async Task<IEnumerable<T>> FindAsync(object whereParam) {
+            return await SelectAsync(DefaultCondition, whereParam);
         }
         
         private string _selectQuery;
-        public override IEnumerable<T> SelectWhere(string where, object whereParam) {
+        /// <inheritdoc />
+        public override async Task<IEnumerable<T>> SelectAsync(string where, object whereParam) {
             // Build Query
             if (_selectQuery == null) {
                 _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}] [{Alias}]";
             }
             
             // Select with condition
-            var results = Connection.Query<T>(
+            var results = await Connection.QueryAsync<T>(
                 _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
                 whereParam
             );
@@ -413,32 +549,8 @@ namespace Slacker {
             return results;
         }
 
-        /// <summary>
-        /// Updates from model using default primary key condition 
-        /// </summary>
-        /// <param name="model"></param>
-        /// <param name="onlyChanged">Only update changed fields on the model</param>
-        public void Update(T model, bool updateOnlyChangedProperties = true) {
-            if (updateOnlyChangedProperties) {
-                if (model.ChangedProperties.Count < 1) {
-                    return;
-                }
-
-                Update(model, model.ChangedProperties);
-                return;
-            }
-
-            Update(model);
-        }
-
-        /// <summary>
-        /// Updates from model
-        /// </summary>
-        /// <param name="model">T or anonymous Object (Uses reflection unless updateFields is set)</param>
-        /// <param name="updateFields">The fields to be updated or null for all</param>
-        /// <param name="where">The condition or null for all</param>
-        /// <param name="whereObj">Additional where object</param>
-        public void Update(object model, IEnumerable<string> updateFields = null, 
+        /// <inheritdoc />
+        public override async Task UpdateAsync(object model, IEnumerable<string> updateFields = null, 
             string where = null, object whereObj = null) {
             
             // Build combined parameter object
@@ -449,7 +561,8 @@ namespace Slacker {
 
             // If fields is null and model is anonymous object, lookup properties.
             if (updateFields == null && !(model is T)) {
-                updateFields = model.GetType().GetMembers().Select(
+                var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
+                updateFields = model.GetType().GetProperties(bindingFlags).Select(
                     m => m.Name
                 );
             }
@@ -469,19 +582,21 @@ namespace Slacker {
                 FROM [{Table}] [{Alias}]
                 WHERE {where ?? DefaultCondition}";
 
-            Connection.Execute(update, model);
+            await Connection.ExecuteAsync(update, param);
 
             if (model is DataModel) {
                 ((DataModel) model).ChangedProperties.Clear();
             }
             
         }
-        
-        public override void Delete(T model) {
-            Delete(DefaultCondition, model);
+
+        /// <inheritdoc />
+        public override async Task DeleteAsync(T model) {
+            await DeleteAsync(DefaultCondition, model);
         }
-        
-        public override void Delete(string where, object whereParam) {
+
+        /// <inheritdoc />
+        public override async Task DeleteAsync(string where, object whereParam) {
             string query = $@"DELETE FROM {Table}";
 
             if (string.IsNullOrEmpty(where)) {
@@ -490,7 +605,7 @@ namespace Slacker {
                     throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
                 }
                 // Delete All
-                Connection.Execute(query);
+                await Connection.ExecuteAsync(query);
             }
 
             // Runtime "Sanity" Check
@@ -498,44 +613,28 @@ namespace Slacker {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
             // Delete by Condition
-            Connection.Execute(query + " WHERE " + where, whereParam);
+            await Connection.ExecuteAsync(query + " WHERE " + where, whereParam);
         }
         #endregion
 
 
 
         #region Helper Methods
-        public DataTable ConvertDataModelsToDataTable(IEnumerable<dynamic> models) {
-            var dataTable = new DataTable(Table);
-
-            // Build DataTable Structure
-            var columns = Fields.Select(dataField => new DataColumn(
-                    dataField.TableField,
-                    dataField.ModelFieldType
-            ));
-            dataTable.Columns.AddRange(columns.ToArray());
-
-            // DataModel -> DataRow Conversion
-            models.Cast<IDictionary<string, object>>().ToList().ForEach(
-                dataModel => dataTable.Rows.Add(
-                    // Get Values from Model
-                    Fields.Select(field => 
-                        dataModel.TryGetValue(
-                            field.ModelField, out object value
-                        ) ? value : null
-                    )
-                )
-            );
+        /// <summary>
+        /// Converts dataset to DataTable
+        /// </summary>
+        public static DataTable ToDataTable(IEnumerable<T> data) {
+            var dataTable = new DataTable(typeof(T).Name);
+            using (var reader = ObjectReader.Create(data)) {
+                dataTable.Load(reader);
+            }
 
             return dataTable;
         }
-
         /// <summary>
-        /// Retrieves a registered DataService for Model
+        /// Retrieves a registered DataService instance for type
         /// </summary>
-        /// <typeparam name="M">The DataModel Type</typeparam>
-        /// <returns>The responsible DataService for given Model M</returns>
-        public static DataService<T> GetModelService() {
+        public static DataService<T> GetService() {
             return (DataService<T>) SERVICE_REGISTRY.GetService(typeof(T));
         }
         #endregion

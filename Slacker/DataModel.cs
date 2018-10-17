@@ -19,7 +19,7 @@ namespace Slacker {
         /// Keeps track of what properties were changed on Model
         /// </summary>
         [Field(Ignored = true)]
-        public IList<string> ChangedProperties { get; set; }
+        public IList<string> ChangedProperties { get; set; } = new List<string>();
 
         /// <summary>
         /// Enables/Disables change tracking.
@@ -36,10 +36,6 @@ namespace Slacker {
                 return;
             }
 
-            if (ChangedProperties == null) {
-                ChangedProperties = new List<string>();
-            }
- 
             if (ChangedProperties.Contains(propertyName)) {
                 return; 
             }

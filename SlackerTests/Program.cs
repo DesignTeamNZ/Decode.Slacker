@@ -23,6 +23,20 @@ namespace SlackerTests {
                 connection
             );
 
+            TestSelect();
+        }
+
+        static void TestSelect() {
+            var service = DataService<UserModel>.GetModelService();
+            var results = service.SelectWhere("Username=@Username", new {
+                Username = "TestUser"
+            });
+
+            return;
+        }
+
+        static void TestInsertUpdate() { 
+
             var service = DataService<UserModel>.GetModelService();
             var insertModel = new UserModel() {
                 Username = "TestUser",
