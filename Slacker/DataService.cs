@@ -11,6 +11,7 @@ using System.Data;
 using System.Dynamic;
 using FastMember;
 using System.Threading.Tasks;
+using Slacker.Exceptions;
 
 namespace Slacker {
 
@@ -224,7 +225,7 @@ namespace Slacker {
     }
 
     public abstract class DataService<T> : DataServiceProvider<T> where T : DataModel, new() {
-
+        
         private static ServiceRegistry _serviceRegistry;
         /// <summary>
         /// Stores all singleton type instances of IDataService
@@ -514,17 +515,19 @@ namespace Slacker {
 
             // Do Insert
             foreach (var model in models) {
+                
                 if (autoIncField == null || !loadGeneratedKeys) {
-                    await Connection.ExecuteAsync(_insertQuery, model);
+                    await ExecuteAsync(_insertQuery, model);
                     continue;
                 }
 
                 // Update and save generated id to model
-                var results = await Connection.QueryAsync<int>(
+                var results = await QueryAsync<int>(
                     _insertQuery + @"SELECT CAST(SCOPE_IDENTITY() as int)",
                     model
                 );
-                
+
+
                 TypeAccessor[model, autoIncField.ModelField] = results.Single();
                 model.ChangedProperties.Clear();
             }
@@ -544,7 +547,7 @@ namespace Slacker {
             }
             
             // Select with condition
-            var results = await Connection.QueryAsync<T>(
+            var results = await QueryAsync<T>(
                 _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
                 whereParam
             );
@@ -590,7 +593,7 @@ namespace Slacker {
                 FROM [{Table}] [{Alias}]
                 WHERE {where ?? DefaultCondition}";
 
-            await Connection.ExecuteAsync(update, param);
+            await ExecuteAsync(update, param);
 
             if (model is DataModel) {
                 ((DataModel) model).ChangedProperties.Clear();
@@ -613,16 +616,42 @@ namespace Slacker {
                     throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
                 }
                 // Delete All
-                await Connection.ExecuteAsync(query);
+                await ExecuteAsync(query);
             }
+            
 
             // Runtime "Sanity" Check
             if (!AllowDelete) {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
             // Delete by Condition
-            await Connection.ExecuteAsync(query + " WHERE " + where, whereParam);
+            await ExecuteAsync(query + " WHERE " + where, whereParam);
         }
+
+        /// <summary>
+        /// Performs a standard Dapper QueryAsync but wraps SqlExceptions with SlackerSqlException
+        /// </summary>
+        public async Task<IEnumerable<T>> QueryAsync(string query, object parameter = null) {
+            try {
+                return await Connection.QueryAsync<T>(query, parameter);
+            }
+            catch (SqlException e) {
+                throw new SlackerSqlException(e, query, parameter);
+            }
+        }
+
+        /// <summary>
+        /// Performs a standard Dapper ExecuteAsync but wraps SqlExceptions with SlackerSqlException
+        /// </summary>
+        public async Task<int> ExecuteAsync(string query, object parameter = null) {
+            try {
+                return await Connection.ExecuteAsync(query, parameter);
+            }
+            catch (SqlException e) {
+                throw new SlackerSqlException(e, query, parameter);
+            }
+        }
+
         #endregion
 
 
