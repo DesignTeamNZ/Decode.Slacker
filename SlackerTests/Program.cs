@@ -24,7 +24,7 @@ namespace SlackerTests {
                 connection
             );
 
-            TestSelect();
+            TestInsertUpdate();
         }
 
         static void TestSelect() {
@@ -46,7 +46,6 @@ namespace SlackerTests {
             };
 
             service.Insert(insertModel);
-
 
             insertModel.Password = "NewPasswordTest";
             service.Update(insertModel);

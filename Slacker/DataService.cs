@@ -199,7 +199,7 @@ namespace Slacker {
                 return;
             }
 
-            await UpdateAsync(model);
+            await UpdateAsync((object) model);
         }
         /// <inheritdoc />
         public abstract Task UpdateAsync(object model, IEnumerable<string> updateFields = null, 
