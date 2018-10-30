@@ -1,4 +1,5 @@
-﻿using Slacker.Helpers.Attributes;
+﻿using PropertyChanged;
+using Slacker.Helpers.Attributes;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,38 +10,60 @@ using System.Threading.Tasks;
 
 namespace Slacker {
 
-    public interface IDataModel {
-
+    public interface IDataModel : INotifyPropertyChanged {
+        void OnPropertyChanged(string propertyName, object before, object after);
     }
     
     public class DataModel : IDataModel {
 
+        private IList<string> _changedProperties = new List<string>();
         /// <summary>
         /// Keeps track of what properties were changed on Model
         /// </summary>
+        [DoNotNotify]
         [Field(Ignored = true)]
-        public IList<string> ChangedProperties { get; set; } = new List<string>();
+        public IList<string> ChangedProperties {
+            get {
+                return _changedProperties;    
+            }
+            set {
+                _changedProperties = value;
+            }
+        }
 
+
+        private bool _changeTrackingDisabled;
         /// <summary>
         /// Enables/Disables change tracking.
         /// </summary>
+        [DoNotNotify]
         [Field(Ignored = true)]
-        public bool ChangeTracking { get; set; } = true;
-        
+        public bool ChangeTrackingDisabled {
+            get {
+                return _changeTrackingDisabled;
+            }
+            set {
+                _changeTrackingDisabled = value;
+                if (value) ChangedProperties.Clear();
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
         /// <summary>
-        /// Used to notify DataService of what properties were changed on this model
+        /// Raises a Property Changed event
         /// </summary>
-        /// <param name="propertyName">Name of property</param>
-        protected void PropChanged([CallerMemberName] string propertyName = null) {
-            if (propertyName == null || !ChangeTracking) {
+        public void OnPropertyChanged(string propertyName, object before, object after) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+            if (propertyName == null || ChangeTrackingDisabled ) {
                 return;
             }
 
-            if (ChangedProperties.Contains(propertyName)) {
-                return; 
+            // Register Property Changed
+            if (!ChangedProperties.Contains(propertyName) && before != after) {
+                ChangedProperties.Add(propertyName);
             }
-            
-            ChangedProperties.Add(propertyName);
+
         }
     }
     

@@ -16,24 +16,25 @@ namespace Slacker {
         /// </summary>
         public static void InitializeDataServices(Func<Type, bool> filter, SqlConnection conn) {
             foreach (Type type in GetAllDataServices()) {
-                if (filter != null && !filter(type)) {
-
-                    var constructor = type.GetConstructors().FirstOrDefault(
-                        constr => {
-                            var prams = constr.GetParameters();
-                            return prams.Count() == 1 
-                                && prams[0].ParameterType.IsAssignableFrom(typeof(SqlConnection));
-                        }
-                    );
-
-                    if (constructor == null) {
-                        throw new Exception($"Could not initialize DS '{type.Name}'. " + 
-                            $"DataSource requires a constructor that takes " +
-                            $"only '{ typeof(SqlConnection) }' argument.");
-                    }
-
-                    constructor.Invoke(new object[] { conn });
+                if (filter == null || !filter(type)) {
+                    continue;
                 }
+                
+                var constructor = type.GetConstructors().FirstOrDefault(
+                    constr => {
+                        var prams = constr.GetParameters();
+                        return prams.Count() == 1 
+                            && prams[0].ParameterType.IsAssignableFrom(typeof(SqlConnection));
+                    }
+                );
+
+                if (constructor == null) {
+                    throw new Exception($"Could not initialize DS '{type.Name}'. " + 
+                        $"DataSource requires a constructor that takes " +
+                        $"only '{ typeof(SqlConnection) }' argument.");
+                }
+
+                constructor.Invoke(new object[] { conn });
             }
         }
 
