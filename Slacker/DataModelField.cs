@@ -13,7 +13,7 @@ namespace Slacker {
         public string ModelField { get; protected set; }
 
         public Type ModelFieldType { get; protected set; }
-        public Field FieldAttribute { get; protected set; }
+        public FieldAttribute FieldAttribute { get; protected set; }
         
         public bool IsPrimary {
             get {
@@ -32,7 +32,7 @@ namespace Slacker {
         }
 
         public DataModelField(MemberInfo memberField) {
-            FieldAttribute = memberField.GetCustomAttribute<Field>();
+            FieldAttribute = memberField.GetCustomAttribute<FieldAttribute>();
             if (FieldAttribute == null) {
                 TableField = ModelField = memberField.Name;
                 return;

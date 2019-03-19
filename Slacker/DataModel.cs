@@ -21,7 +21,7 @@ namespace Slacker {
         /// Keeps track of what properties were changed on Model
         /// </summary>
         [DoNotNotify]
-        [Field(Ignored = true)]
+        [FieldAttribute(Ignored = true)]
         public IList<string> ChangedProperties {
             get {
                 return _changedProperties;    
@@ -37,7 +37,7 @@ namespace Slacker {
         /// Enables/Disables change tracking.
         /// </summary>
         [DoNotNotify]
-        [Field(Ignored = true)]
+        [FieldAttribute(Ignored = true)]
         public bool ChangeTrackingDisabled {
             get {
                 return _changeTrackingDisabled;

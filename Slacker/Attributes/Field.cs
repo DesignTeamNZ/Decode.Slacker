@@ -6,7 +6,7 @@ namespace Slacker.Helpers.Attributes
     /// Attribute used in DataModels to override default mapping
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Property)]
-    public class Field : System.Attribute {
+    public class FieldAttribute : System.Attribute {
 
         public string Name { get; set; }
         public bool IsPrimary { get; set; }

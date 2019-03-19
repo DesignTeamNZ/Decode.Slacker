@@ -370,14 +370,14 @@ namespace Slacker {
 
 
         private bool _tableAttributeSearched;
-        public Table _tableAttribute;
+        public TableAttribute _tableAttribute;
         /// <summary>
         /// Returns the Table Attribute if defined for this table
         /// </summary>
-        public Table TableAttribute {
+        public TableAttribute TableAttribute {
             get {
                 if (!_tableAttributeSearched) {
-                    _tableAttribute = typeof(T).GetCustomAttribute<Table>();
+                    _tableAttribute = typeof(T).GetCustomAttribute<TableAttribute>();
                     _tableAttributeSearched = true;
                 }
 

@@ -19,10 +19,10 @@ namespace SlackerTests {
     /// <summary>
     /// Example User DataModel
     /// </summary>
-    [Table("Users", "u")]
+    [TableAttribute("Users", "u")]
     public class UserModel : DataModel {
 
-        [Field(IsPrimary = true)]
+        [FieldAttribute(IsPrimary = true)]
         public int? Id { get; set; }
 
         public string Username { get; set; }
