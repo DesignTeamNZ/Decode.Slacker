@@ -143,102 +143,99 @@ namespace Slacker {
         /// <param name="whereParam">Condition parameter</param>
         Task DeleteAsync(string where, object whereParam);
         #endregion
-
     }
 
     public abstract class DataServiceProvider<T> : IDataService<T> where T: DataModel, new() {
         #region Insert
         /// <inheritdoc />
-        public void Insert(T model, bool loadGeneratedKeys = true) {
-            AsyncHelpers.RunSync(InsertAsync(model, loadGeneratedKeys));
-        }
-        /// <inheritdoc />
-        public void Insert(T[] models, bool loadGeneratedKeys = true) {
-            AsyncHelpers.RunSync(InsertAsync(models, loadGeneratedKeys));
-        }
-        /// <inheritdoc />
         public async Task InsertAsync(T model, bool loadGeneratedKeys = true) {
-            await InsertAsync(new[] { model }, loadGeneratedKeys);
+            await Task.Run(new Action(() => { Insert(model, loadGeneratedKeys); }));
         }
         /// <inheritdoc />
-        public abstract Task InsertAsync(T[] models, bool loadGeneratedKeys = true);
+        public async Task InsertAsync(T[] models, bool loadGeneratedKeys = true) {
+            await Task.Run(new Action(() => { Insert(models, loadGeneratedKeys); }));
+        }
+        /// <inheritdoc />
+        public void Insert(T model, bool loadGeneratedKeys = true) {
+            Insert(new[] { model }, loadGeneratedKeys);
+        }
+        /// <inheritdoc />
+        public abstract void Insert(T[] models, bool loadGeneratedKeys = true);
         #endregion
 
         #region Select
         /// <inheritdoc />
-        public IEnumerable<T> SelectAll() {
-            return AsyncHelpers.RunSync(SelectAllAsync());
-        }
-        /// <inheritdoc />
-        public IEnumerable<T> Find(object whereParam) {
-            return AsyncHelpers.RunSync(FindAsync(whereParam));
-        }
-        /// <inheritdoc />
-        public IEnumerable<T> Select(string where, object whereParam) {
-            return AsyncHelpers.RunSync(SelectAsync(where, whereParam));
-        }
-        /// <inheritdoc />
         public async Task<IEnumerable<T>> SelectAllAsync() {
-            return await SelectAsync("", false);
+            return await Task.Run(() => { return SelectAll(); });
         }
         /// <inheritdoc />
-        public abstract Task<IEnumerable<T>> FindAsync(object whereParam);
+        public async Task<IEnumerable<T>> FindAsync(object whereParam) {
+            return await Task.Run(() => { return Find(whereParam); });
+        }
         /// <inheritdoc />
-        public abstract Task<IEnumerable<T>> SelectAsync(string where, object whereParam);
+        public async Task<IEnumerable<T>> SelectAsync(string where, object whereParam) {
+            return await Task.Run(() => { return SelectAsync(where, whereParam); });
+        }
+        /// <inheritdoc />
+        public IEnumerable<T> SelectAll() {
+            return Select("", false);
+        }
+        /// <inheritdoc />
+        public abstract IEnumerable<T> Find(object whereParam);
+        /// <inheritdoc />
+        public abstract IEnumerable<T> Select(string where, object whereParam);
         #endregion
 
         #region Update
         /// <inheritdoc />
-        public void Update(T model, bool updateOnlyChangedProperties = true) {
-            AsyncHelpers.RunSync(UpdateAsync(model, updateOnlyChangedProperties));
+        public async Task UpdateAsync(T model, bool updateOnlyChangedProperties = true) {
+            await Task.Run(() => { Update(model, updateOnlyChangedProperties); });
         }
         /// <inheritdoc />
-        public void Update(object model, IEnumerable<string> updateFields = null,
+        public async Task UpdateAsync(object model, IEnumerable<string> updateFields = null,
             string where = null, object whereObj = null) {
 
-            AsyncHelpers.RunSync(UpdateAsync(
-                model, updateFields, where, whereObj
-            ));
+            await Task.Run(() => { Update(model, updateFields, where, whereObj); });
         }
         /// <inheritdoc />
-        public async Task UpdateAsync(T model, bool updateOnlyChangedProperties = true) {
+        public void Update(T model, bool updateOnlyChangedProperties = true) {
             if (updateOnlyChangedProperties) {
                 if (model.ChangedProperties.Count < 1) {
                     return;
                 }
 
-                await UpdateAsync(model, model.ChangedProperties);
+                Update(model, model.ChangedProperties);
                 return;
             }
 
-            await UpdateAsync((object) model);
+            Update((object) model);
         }
         /// <inheritdoc />
-        public abstract Task UpdateAsync(object model, IEnumerable<string> updateFields = null, 
+        public abstract void Update(object model, IEnumerable<string> updateFields = null, 
             string where = null, object whereObj = null);
         #endregion
 
         #region Delete
         /// <inheritdoc />
-        public void DeleteAll() {
-            AsyncHelpers.RunSync(DeleteAllAsync());
-        }
-        /// <inheritdoc />
-        public void Delete(T model) {
-            AsyncHelpers.RunSync(DeleteAsync(model));
-        }
-        /// <inheritdoc />
-        public void Delete(string where, object whereParam) {
-            AsyncHelpers.RunSync(DeleteAsync(where, whereParam));
-        }
-        /// <inheritdoc />
         public async Task DeleteAllAsync() {
-            await DeleteAsync("", null);
+            await Task.Run(() => { DeleteAll(); });
         }
         /// <inheritdoc />
-        public abstract Task DeleteAsync(T model);
+        public async Task DeleteAsync(T model) {
+            await Task.Run(() => { Delete(model); });
+        }
         /// <inheritdoc />
-        public abstract Task DeleteAsync(string where, object whereParam);
+        public async Task DeleteAsync(string where, object whereParam) {
+            await Task.Run(() => { Delete(where, whereParam); });
+        }
+        /// <inheritdoc />
+        public void DeleteAll() {
+            Delete("", null);
+        }
+        /// <inheritdoc />
+        public abstract void Delete(T model);
+        /// <inheritdoc />
+        public abstract void Delete(string where, object whereParam);
         #endregion
 
     }
@@ -519,7 +516,7 @@ namespace Slacker {
         #region CRUD Functions
         private string _insertQuery;
         /// <inheritdoc />
-        public override async Task InsertAsync(T[] models, bool loadGeneratedKeys = true) {
+        public override void Insert(T[] models, bool loadGeneratedKeys = true) {
 
             // Build Insert Query
             if(_insertQuery == null) { 
@@ -536,12 +533,12 @@ namespace Slacker {
             foreach (var model in models) {
                 
                 if (autoIncField == null || !loadGeneratedKeys) {
-                    await ExecuteAsync(_insertQuery, model);
+                    Execute(_insertQuery, model);
                     continue;
                 }
 
                 // Update and save generated id to model
-                var results = await QueryAsync<int>(
+                var results = Query<int>(
                     _insertQuery + @"SELECT CAST(SCOPE_IDENTITY() as int)",
                     model
                 );
@@ -553,20 +550,20 @@ namespace Slacker {
         }
 
         /// <inheritdoc />
-        public override async Task<IEnumerable<T>> FindAsync(object whereParam) {
-            return await SelectAsync(DefaultCondition, whereParam);
+        public override IEnumerable<T> Find(object whereParam) {
+            return Select(DefaultCondition, whereParam);
         }
         
         private string _selectQuery;
         /// <inheritdoc />
-        public override async Task<IEnumerable<T>> SelectAsync(string where, object whereParam) {
+        public override IEnumerable<T> Select(string where, object whereParam) {
             // Build Query
             if (_selectQuery == null) {
                 _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}] [{Alias}]";
             }
             
             // Select with condition
-            var results = await QueryAsync<T>(
+            var results = Query<T>(
                 _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
                 whereParam
             );
@@ -580,7 +577,7 @@ namespace Slacker {
         }
 
         /// <inheritdoc />
-        public override async Task UpdateAsync(object model, IEnumerable<string> updateFields = null, 
+        public override void Update(object model, IEnumerable<string> updateFields = null, 
             string where = null, object whereObj = null) {
             
             // Build combined parameter object
@@ -617,7 +614,7 @@ namespace Slacker {
                 FROM [{Table}] [{Alias}]
                 WHERE {where ?? DefaultCondition}";
 
-            await ExecuteAsync(update, param);
+            Execute(update, param);
 
             if (model is DataModel) {
                 ((DataModel) model).ChangedProperties.Clear();
@@ -626,12 +623,12 @@ namespace Slacker {
         }
 
         /// <inheritdoc />
-        public override async Task DeleteAsync(T model) {
-            await DeleteAsync(DefaultCondition, model);
+        public override void Delete(T model) {
+            Delete(DefaultCondition, model);
         }
 
         /// <inheritdoc />
-        public override async Task DeleteAsync(string where, object whereParam) {
+        public override void Delete(string where, object whereParam) {
             string query = $@"DELETE FROM {Table}";
 
             if (string.IsNullOrEmpty(where)) {
@@ -640,7 +637,7 @@ namespace Slacker {
                     throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
                 }
                 // Delete All
-                await ExecuteAsync(query);
+                Execute(query);
                 return;
             }
             
@@ -650,15 +647,15 @@ namespace Slacker {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
             // Delete by Condition
-            await ExecuteAsync(query + " WHERE " + where, whereParam);
+            Execute(query + " WHERE " + where, whereParam);
         }
 
         /// <summary>
         /// Performs a standard Dapper QueryAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public async Task<IEnumerable<U>> QueryAsync<U>(string query, object parameter = null) {
+        public IEnumerable<U> Query<U>(string query, object parameter = null) {
             try {
-                return await Connection.QueryAsync<U>(query, parameter);
+                return Connection.Query<U>(query, parameter);
             }
             catch (SqlException e) {
                 throw new SlackerSqlException(e, query, parameter);
@@ -668,9 +665,9 @@ namespace Slacker {
         /// <summary>
         /// Performs a standard Dapper ExecuteAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public async Task<int> ExecuteAsync(string query, object parameter = null) {
+        public int Execute(string query, object parameter = null) {
             try {
-                return await Connection.ExecuteAsync(query, parameter);
+                return Connection.Execute(query, parameter);
             }
             catch (SqlException e) {
                 throw new SlackerSqlException(e, query, parameter);
