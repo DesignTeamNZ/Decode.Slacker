@@ -12,6 +12,8 @@ using System.Dynamic;
 using FastMember;
 using System.Threading.Tasks;
 using Slacker.Exceptions;
+using Slacker.Connection;
+using System.Threading;
 
 namespace Slacker {
 
@@ -29,67 +31,78 @@ namespace Slacker {
         /// Perform an insert query using data model
         /// </summary>
         /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
-        void Insert(T model, bool loadGeneratedKeys = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Insert(T model, bool loadGeneratedKeys = true, long batchId = -1);
         /// <summary>
         /// Perform an insert query using data model(s)
         /// </summary>
         /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
-        void Insert(T[] models, bool loadGeneratedKeys = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Insert(T[] models, bool loadGeneratedKeys = true, long batchId = -1);
         /// <summary>
         /// Perform an async insert query using data model
         /// </summary>
         /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
-        Task InsertAsync(T model, bool loadGeneratedKeys = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task InsertAsync(T model, bool loadGeneratedKeys = true, long batchId = -1);
         /// <summary>
         /// Perform an async insert query using data model(s)
         /// </summary>
         /// <param name="loadGeneratedKeys">Should generated keys (ID fields) be loaded to models on insert.</param>
-        Task InsertAsync(T[] models, bool loadGeneratedKeys = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task InsertAsync(T[] models, bool loadGeneratedKeys = true, long batchId = -1);
         #endregion
         #region Select
         /// <summary>
         /// Select all records
         /// </summary>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        IEnumerable<T> SelectAll();
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        IEnumerable<T> SelectAll(long batchId = -1);
         /// <summary>
         /// Perform an async select using a default condition (Primary Key) with parameter object
         /// </summary>
         /// <param name="whereParam"></param>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        IEnumerable<T> Find(object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        IEnumerable<T> Find(object whereParam, long batchId = -1);
         /// <summary>
         /// Perform an select query with Condition
         /// </summary>
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
         /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
-        IEnumerable<T> Select(string where, object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        IEnumerable<T> Select(string where, object whereParam, long batchId = -1);
         /// <summary>
         /// Select all records async
         /// </summary>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        Task<IEnumerable<T>> SelectAllAsync();
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task<IEnumerable<T>> SelectAllAsync(long batchId = -1);
         /// <summary>
         /// Perform an async select using a default condition (Primary Key) with parameter object
         /// </summary>
         /// <param name="whereParam"></param>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
-        Task<IEnumerable<T>> FindAsync(object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task<IEnumerable<T>> FindAsync(object whereParam, long batchId = -1);
         /// <summary>
         /// Perform an async select query with Condition
         /// </summary>
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
         /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
-        Task<IEnumerable<T>> SelectAsync(string where, object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task<IEnumerable<T>> SelectAsync(string where, object whereParam, long batchId = -1);
         #endregion
         #region Update
         /// Performs an update on data model using default primary key based condition
         /// </summary>
         /// <param name="model"></param>
         /// <param name="onlyChanged">Only update changed fields on the model</param>
-        void Update(T model, bool updateOnlyChangedProperties = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Update(T model, bool updateOnlyChangedProperties = true, long batchId = -1);
         /// <summary>
         /// Performs an update on object model
         /// </summary>
@@ -97,12 +110,14 @@ namespace Slacker {
         /// <param name="updateFields">The fields to be updated or null for all</param>
         /// <param name="where">The condition or null for all models (Requires UpdateAll Flag)</param>
         /// <param name="whereObj">Provides an additional object for where condition specifically.</param>
-        void Update(object model, IEnumerable<string> updateFields = null, string where = null, object whereObj = null);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Update(object model, IEnumerable<string> updateFields = null, string where = null, object whereObj = null, long batchId = -1);
         /// Performs an async update on data model using default primary key based condition
         /// </summary>
         /// <param name="model"></param>
         /// <param name="onlyChanged">Only update changed fields on the model</param>
-        Task UpdateAsync(T model, bool updateOnlyChangedProperties = true);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task UpdateAsync(T model, bool updateOnlyChangedProperties = true, long batchId = -1);
         /// <summary>
         /// Performs an async update on object model
         /// </summary>
@@ -110,132 +125,169 @@ namespace Slacker {
         /// <param name="updateFields">The fields to be updated or null for all</param>
         /// <param name="where">The condition or null for all models (Requires UpdateAll Flag)</param>
         /// <param name="whereObj">Provides an additional object for where condition specifically.</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         Task UpdateAsync(object model, IEnumerable<string> updateFields = null,
-            string where = null, object whereObj = null);
+            string where = null, object whereObj = null, long batchId = -1);
         #endregion
         #region Delete
         /// <summary>
         /// Global Delete on Table
         /// </summary>
-        void DeleteAll();
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void DeleteAll(long batchId = -1);
         /// <summary>
         /// Delete a model by primary key
         /// </summary>
-        void Delete(T model);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Delete(T model, long batchId = -1);
         /// <summary>
         /// Delete records based on condition and condition parameter
         /// </summary>
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
-        void Delete(string where, object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Delete(string where, object whereParam, long batchId = -1);
         /// <summary>
         /// Async Global Delete on Table
         /// </summary>
-        Task DeleteAllAsync();
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task DeleteAllAsync(long batchId = -1);
         /// <summary>
         /// Async Delete a model by primary key
         /// </summary>
-        Task DeleteAsync(T model);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task DeleteAsync(T model, long batchId = -1);
         /// <summary>
         /// Async Delete records based on condition and condition parameter
         /// </summary>
         /// <param name="where">Condition query</param>
         /// <param name="whereParam">Condition parameter</param>
-        Task DeleteAsync(string where, object whereParam);
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task DeleteAsync(string where, object whereParam, long batchId = -1);
+        #endregion
+
+        #region Batches
+        /// <summary>
+        /// Marks the connection manager to treat all updates as part of the same batch / connection.
+        /// </summary>
+        /// <param name="batchId">A identification number (batch number). If null thread id will be used</param>
+        /// <param name="createTransactionAs">Optinal transaction name to enable transaction support for this batch</param>
+        void StartBatch(long batchId = -1, string createTransactionAs = null);
+        /// <summary>
+        /// Ends the current batch and closes the batch connection, if transaction has been created for this batch it will be commited
+        /// </summary>
+        /// <param name="batchId">A identification number (batch number). If null thread id will be used</param>
+        void EndBatch(long batchId = -1);
+        /// <summary>
+        /// Rolls back the current transaction associated with this batch (Requires StartBatch:createTransactionAs).
+        /// </summary>
+        /// <param name="batchId">A identification number (batch number). If null thread id will be used</param>
+        /// <param name="closeConnection">Specifies if 'EndBatch' be called after rollback.</param>
+        void RollbackBatch(long batchId = -1, bool closeConnection = true);
         #endregion
     }
 
     public abstract class DataServiceProvider<T> : IDataService<T> where T: DataModel, new() {
         #region Insert
         /// <inheritdoc />
-        public async Task InsertAsync(T model, bool loadGeneratedKeys = true) {
-            await Task.Run(new Action(() => { Insert(model, loadGeneratedKeys); }));
+        public async Task InsertAsync(T model, bool loadGeneratedKeys = true, long batchId = -1) {
+            await Task.Run(new Action(() => { Insert(model, loadGeneratedKeys, batchId); }));
         }
         /// <inheritdoc />
-        public async Task InsertAsync(T[] models, bool loadGeneratedKeys = true) {
-            await Task.Run(new Action(() => { Insert(models, loadGeneratedKeys); }));
+        public async Task InsertAsync(T[] models, bool loadGeneratedKeys = true, long batchId = -1) {
+            await Task.Run(new Action(() => { Insert(models, loadGeneratedKeys, batchId); }));
         }
         /// <inheritdoc />
-        public void Insert(T model, bool loadGeneratedKeys = true) {
-            Insert(new[] { model }, loadGeneratedKeys);
+        public void Insert(T model, bool loadGeneratedKeys = true, long batchId = -1) {
+            Insert(new[] { model }, loadGeneratedKeys, batchId);
         }
         /// <inheritdoc />
-        public abstract void Insert(T[] models, bool loadGeneratedKeys = true);
+        public abstract void Insert(T[] models, bool loadGeneratedKeys = true, long batchId = -1);
         #endregion
 
         #region Select
         /// <inheritdoc />
-        public async Task<IEnumerable<T>> SelectAllAsync() {
-            return await Task.Run(() => { return SelectAll(); });
+        public async Task<IEnumerable<T>> SelectAllAsync(long batchId = -1) {
+            return await Task.Run(() => { return SelectAll(batchId); });
         }
         /// <inheritdoc />
-        public async Task<IEnumerable<T>> FindAsync(object whereParam) {
-            return await Task.Run(() => { return Find(whereParam); });
+        public async Task<IEnumerable<T>> FindAsync(object whereParam, long batchId = -1) {
+            return await Task.Run(() => { return Find(whereParam, batchId); });
         }
         /// <inheritdoc />
-        public async Task<IEnumerable<T>> SelectAsync(string where, object whereParam) {
-            return await Task.Run(() => { return SelectAsync(where, whereParam); });
+        public async Task<IEnumerable<T>> SelectAsync(string where, object whereParam, long batchId = -1) {
+            return await Task.Run(() => { return SelectAsync(where, whereParam, batchId); });
         }
         /// <inheritdoc />
-        public IEnumerable<T> SelectAll() {
-            return Select("", false);
+        public IEnumerable<T> SelectAll(long batchId = -1) {
+            return Select("", false, batchId);
         }
         /// <inheritdoc />
-        public abstract IEnumerable<T> Find(object whereParam);
+        public abstract IEnumerable<T> Find(object whereParam, long batchId = -1);
         /// <inheritdoc />
-        public abstract IEnumerable<T> Select(string where, object whereParam);
+        public abstract IEnumerable<T> Select(string where, object whereParam, long batchId = -1);
         #endregion
 
         #region Update
         /// <inheritdoc />
-        public async Task UpdateAsync(T model, bool updateOnlyChangedProperties = true) {
-            await Task.Run(() => { Update(model, updateOnlyChangedProperties); });
+        public async Task UpdateAsync(T model, bool updateOnlyChangedProperties = true, long batchId = -1) {
+            await Task.Run(() => { Update(model, updateOnlyChangedProperties, batchId); });
         }
         /// <inheritdoc />
         public async Task UpdateAsync(object model, IEnumerable<string> updateFields = null,
-            string where = null, object whereObj = null) {
+            string where = null, object whereObj = null, long batchId = -1) {
 
-            await Task.Run(() => { Update(model, updateFields, where, whereObj); });
+            await Task.Run(() => { Update(model, updateFields, where, whereObj, batchId); });
         }
         /// <inheritdoc />
-        public void Update(T model, bool updateOnlyChangedProperties = true) {
+        public void Update(T model, bool updateOnlyChangedProperties = true, long batchId = -1) {
             if (updateOnlyChangedProperties) {
-                if (model.ChangedProperties.Count < 1) {
+                var changedProperties = model.GetChangedPropertiesList();
+                if (changedProperties.Count < 1) {
                     return;
                 }
 
-                Update(model, model.ChangedProperties);
+                Update(model, changedProperties, null, null, batchId);
                 return;
             }
 
-            Update((object) model);
+            Update(model, null, null, null, batchId);
         }
         /// <inheritdoc />
         public abstract void Update(object model, IEnumerable<string> updateFields = null, 
-            string where = null, object whereObj = null);
+            string where = null, object whereObj = null, long batchId = -1);
         #endregion
 
         #region Delete
         /// <inheritdoc />
-        public async Task DeleteAllAsync() {
-            await Task.Run(() => { DeleteAll(); });
+        public async Task DeleteAllAsync(long batchId = -1) {
+            await Task.Run(() => { DeleteAll(batchId); });
         }
         /// <inheritdoc />
-        public async Task DeleteAsync(T model) {
-            await Task.Run(() => { Delete(model); });
+        public async Task DeleteAsync(T model, long batchId = -1) {
+            await Task.Run(() => { Delete(model, batchId); });
         }
         /// <inheritdoc />
-        public async Task DeleteAsync(string where, object whereParam) {
-            await Task.Run(() => { Delete(where, whereParam); });
+        public async Task DeleteAsync(string where, object whereParam, long batchId = -1) {
+            await Task.Run(() => { Delete(where, whereParam, batchId); });
         }
         /// <inheritdoc />
-        public void DeleteAll() {
-            Delete("", null);
+        public void DeleteAll(long batchId = -1) {
+            Delete("", null, batchId);
         }
         /// <inheritdoc />
-        public abstract void Delete(T model);
+        public abstract void Delete(T model, long batchId = -1);
         /// <inheritdoc />
-        public abstract void Delete(string where, object whereParam);
+        public abstract void Delete(string where, object whereParam, long batchId = -1);
+        #endregion
+
+        #region Batches
+        /// <inheritdoc />
+        public abstract void StartBatch(long batchId = -1, string createTransactionAs = null);
+        /// <inheritdoc />
+        public abstract void EndBatch(long batchId = -1);
+        /// <inheritdoc />
+        public abstract void RollbackBatch(long batchId = -1, bool closeConnection = true);
         #endregion
 
     }
@@ -485,7 +537,7 @@ namespace Slacker {
         /// <summary>
         /// The SQLConnection for this DataService
         /// </summary>
-        public SqlConnection Connection { get; set; }
+        public IDataServiceConnectionManager ConnectionManager { get; set; }
 
         /// <summary>
         /// Contains DataField info
@@ -495,9 +547,9 @@ namespace Slacker {
         /// <summary>
         /// Initializes a new DataService with a given connection
         /// </summary>
-        /// <param name="sqlConnection">The SqlConnection</param>
-        public DataService(SqlConnection sqlConnection = null) {
-            this.Connection = sqlConnection;
+        /// <param name="connectionManager">Connection manager</param>
+        public DataService(DataServiceConnectionManager connectionManager = null) {
+            this.ConnectionManager = connectionManager;
 
             // Register Fields/Properties
             // Potential TODO: Replace with FastMember
@@ -511,12 +563,22 @@ namespace Slacker {
             // Add DataService as managing service for model (T)
             SERVICE_REGISTRY.Register(typeof(T), this);
         }
-        
 
+        [Obsolete]
+        /// <summary>
+        /// Initializes a new DataService with a given connection
+        /// </summary>
+        /// <param name="connectionManager">The SqlConnection</param>
+        public DataService(SqlConnection conn = null) 
+            : this(conn == null ? null : 
+                  DataServiceConnectionManager.FromConnectionString(conn.ConnectionString)
+            ) {
+        }
+        
         #region CRUD Functions
         private string _insertQuery;
         /// <inheritdoc />
-        public override void Insert(T[] models, bool loadGeneratedKeys = true) {
+        public override void Insert(T[] models, bool loadGeneratedKeys = true, long batchId = -1) {
 
             // Build Insert Query
             if(_insertQuery == null) { 
@@ -533,30 +595,31 @@ namespace Slacker {
             foreach (var model in models) {
                 
                 if (autoIncField == null || !loadGeneratedKeys) {
-                    Execute(_insertQuery, model);
+                    Execute(_insertQuery, model, batchId);
                     continue;
                 }
 
                 // Update and save generated id to model
                 var results = Query<int>(
                     _insertQuery + @"SELECT CAST(SCOPE_IDENTITY() as int)",
-                    model
+                    model,
+                    batchId
                 );
 
 
                 TypeAccessor[model, autoIncField.ModelField] = results.Single();
-                model.ChangedProperties.Clear();
+                model.ClearChangedPropertiesList();
             }
         }
 
         /// <inheritdoc />
-        public override IEnumerable<T> Find(object whereParam) {
-            return Select(DefaultCondition, whereParam);
+        public override IEnumerable<T> Find(object whereParam, long batchId = -1) {
+            return Select(DefaultCondition, whereParam, batchId);
         }
         
         private string _selectQuery;
         /// <inheritdoc />
-        public override IEnumerable<T> Select(string where, object whereParam) {
+        public override IEnumerable<T> Select(string where, object whereParam, long batchId = -1) {
             // Build Query
             if (_selectQuery == null) {
                 _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}] [{Alias}]";
@@ -565,12 +628,13 @@ namespace Slacker {
             // Select with condition
             var results = Query<T>(
                 _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
-                whereParam
+                whereParam,
+                batchId
             );
 
             // Clear model changes
             results.ToList().ForEach(
-                res => res.ChangedProperties.Clear()
+                res => res.ClearChangedPropertiesList()
             );
 
             return results;
@@ -578,7 +642,7 @@ namespace Slacker {
 
         /// <inheritdoc />
         public override void Update(object model, IEnumerable<string> updateFields = null, 
-            string where = null, object whereObj = null) {
+            string where = null, object whereObj = null, long batchId = -1) {
             
             // Build combined parameter object
             var param = new DynamicParameters(model);
@@ -614,21 +678,21 @@ namespace Slacker {
                 FROM [{Table}] [{Alias}]
                 WHERE {where ?? DefaultCondition}";
 
-            Execute(update, param);
+            Execute(update, param, batchId);
 
             if (model is DataModel) {
-                ((DataModel) model).ChangedProperties.Clear();
+                ((DataModel)model).ClearChangedPropertiesList();
             }
             
         }
 
         /// <inheritdoc />
-        public override void Delete(T model) {
-            Delete(DefaultCondition, model);
+        public override void Delete(T model, long batchId = -1) {
+            Delete(DefaultCondition, model, batchId);
         }
 
         /// <inheritdoc />
-        public override void Delete(string where, object whereParam) {
+        public override void Delete(string where, object whereParam, long batchId = -1) {
             string query = $@"DELETE FROM {Table}";
 
             if (string.IsNullOrEmpty(where)) {
@@ -637,7 +701,7 @@ namespace Slacker {
                     throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
                 }
                 // Delete All
-                Execute(query);
+                Execute(query, null, batchId);
                 return;
             }
             
@@ -647,15 +711,19 @@ namespace Slacker {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
             // Delete by Condition
-            Execute(query + " WHERE " + where, whereParam);
+            Execute(query + " WHERE " + where, whereParam, batchId);
         }
 
         /// <summary>
         /// Performs a standard Dapper QueryAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public IEnumerable<U> Query<U>(string query, object parameter = null) {
+        public IEnumerable<U> Query<U>(string query, object parameter = null, long batchId = -1) {
             try {
-                return Connection.Query<U>(query, parameter);
+                if (batchId == -1) {
+                    batchId = Thread.CurrentThread.ManagedThreadId;
+                }
+
+                return ConnectionManager.ExecuteQuery<U>(query, parameter, batchId);
             }
             catch (SqlException e) {
                 throw new SlackerSqlException(e, query, parameter);
@@ -665,9 +733,13 @@ namespace Slacker {
         /// <summary>
         /// Performs a standard Dapper ExecuteAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public int Execute(string query, object parameter = null) {
+        public void Execute(string query, object parameter = null, long batchId = -1) {
             try {
-                return Connection.Execute(query, parameter);
+                if (batchId == -1) {
+                    batchId = Thread.CurrentThread.ManagedThreadId;
+                }
+
+                ConnectionManager.ExecuteUpdate(query, parameter, batchId);
             }
             catch (SqlException e) {
                 throw new SlackerSqlException(e, query, parameter);
@@ -682,9 +754,9 @@ namespace Slacker {
         /// <summary>
         /// Converts dataset to DataTable
         /// </summary>
-        public static DataTable ToDataTable(IEnumerable<T> data) {
+        public static DataTable ToDataTable(IEnumerable<T> data, params string[] members) {
             var dataTable = new DataTable(typeof(T).Name);
-            using (var reader = ObjectReader.Create(data)) {
+            using (var reader = ObjectReader.Create(data, members)) {
                 dataTable.Load(reader);
             }
 
@@ -695,6 +767,31 @@ namespace Slacker {
         /// </summary>
         public static DataService<T> GetService() {
             return (DataService<T>) SERVICE_REGISTRY.GetService(typeof(T));
+        }
+
+        #endregion
+
+        #region Batches
+        /// <inheritdoc />
+        public override void StartBatch(long batchId = -1, string createTransactionAs = null) {
+            if (batchId == -1) {
+                batchId = Thread.CurrentThread.ManagedThreadId;
+            }
+            ConnectionManager.StartBatch(batchId, createTransactionAs);
+        }
+        /// <inheritdoc />
+        public override void EndBatch(long batchId = -1) {
+            if (batchId == -1) {
+                batchId = Thread.CurrentThread.ManagedThreadId;
+            }
+            ConnectionManager.EndBatch(batchId);
+        }
+        /// <inheritdoc />
+        public override void RollbackBatch(long batchId = -1, bool closeConnection = true) {
+            if (batchId == -1) {
+                batchId = Thread.CurrentThread.ManagedThreadId;
+            }
+            ConnectionManager.RollbackBatch(batchId, closeConnection);
         }
         #endregion
 

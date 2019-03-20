@@ -21,15 +21,8 @@ namespace Slacker {
         /// Keeps track of what properties were changed on Model
         /// </summary>
         [DoNotNotify]
-        [FieldAttribute(Ignored = true)]
-        public IList<string> ChangedProperties {
-            get {
-                return _changedProperties;    
-            }
-            set {
-                _changedProperties = value;
-            }
-        }
+        [Field(Ignored = true)]
+        private IList<string> ChangedProperties { get; set; }
 
 
         private bool _changeTrackingDisabled;
@@ -37,14 +30,14 @@ namespace Slacker {
         /// Enables/Disables change tracking.
         /// </summary>
         [DoNotNotify]
-        [FieldAttribute(Ignored = true)]
-        public bool ChangeTrackingDisabled {
+        [Field(Ignored = true)]
+        private bool ChangeTrackingDisabled {
             get {
                 return _changeTrackingDisabled;
             }
             set {
                 _changeTrackingDisabled = value;
-                if (value) ChangedProperties.Clear();
+                if (value) ClearChangedPropertiesList();
             }
         }
 
@@ -64,6 +57,34 @@ namespace Slacker {
                 ChangedProperties.Add(propertyName);
             }
 
+        }
+
+        /// <summary>
+        /// Gets the Change Tracking disabled status for this model
+        /// </summary>
+        public bool IsChangeTrackingDisabledStatus() {
+            return ChangeTrackingDisabled;
+        }
+
+        /// <summary>
+        /// Sets the Change Tracking Disabled status for this model
+        /// </summary>
+        public void SetChangeTrackingDisabledStatus(bool disabled) {
+            this.ChangeTrackingDisabled = disabled;
+        }
+
+        /// <summary>
+        /// Keeps track of what properties were changed on Model
+        /// </summary>
+        public IList<string> GetChangedPropertiesList() {
+            return this.ChangedProperties;
+        }
+
+        /// <summary>
+        /// Clears current changed properties list
+        /// </summary>
+        public void ClearChangedPropertiesList() {
+            this.ChangedProperties.Clear();
         }
     }
     

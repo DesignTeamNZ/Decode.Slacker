@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Slacker;
+using Slacker.Connection;
 
 namespace SlackerTests {
 
@@ -24,12 +25,11 @@ namespace SlackerTests {
         /// Initializes the Slacker UserDataService
         /// </summary>
         public void Initialize() {
-            var connection = new SqlConnection(CONN_STR);
-            connection.OpenAsync().Wait();
+            var connection = DataServiceConnectionManager.FromConnectionString(CONN_STR);
+            // var connection2 = DataServiceConnectionManager.FromConfig('MyConfigSetting');
 
             SlackerApp.InitializeDataServices(
-                (type) => type == typeof(UserDataService),
-                connection
+                (type) => type.Namespace.StartsWith("SlackerTests") ? connection : null
             );
         }
 

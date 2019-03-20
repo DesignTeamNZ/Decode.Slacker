@@ -12,11 +12,10 @@ namespace Slacker.Exceptions {
         public object ParameterObject { get; private set; }
 
         public SlackerSqlException(SqlException inner, string sql, object parameter) 
-            : base("Internal Slacker exception.", inner) {
+            : base("Slacker caught a general SQL exception.", inner) {
             this.SqlStatement = sql;
             this.ParameterObject = parameter;
         }
-
 
     }
 }

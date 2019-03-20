@@ -1,4 +1,5 @@
 ﻿using Slacker;
+using Slacker.Connection;
 using Slacker.Helpers.Attributes;
 using System;
 using System.Collections.Generic;
@@ -13,13 +14,13 @@ namespace SlackerTests {
     /// Example UserDataService for User DataModel
     /// </summary>
     public class UserDataService : DataService<UserModel> {
-        public UserDataService(SqlConnection conn) : base(conn) { }
+        public UserDataService(DataServiceConnectionManager conn) : base(conn) { }
     }
 
     /// <summary>
     /// Example User DataModel
     /// </summary>
-    [TableAttribute("Users", "u")]
+    [Table("Users", "u")]
     public class UserModel : DataModel {
 
         [FieldAttribute(IsPrimary = true)]
