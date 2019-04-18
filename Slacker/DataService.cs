@@ -95,6 +95,22 @@ namespace Slacker {
         /// <returns>IEnumerable<typeparamref name="T"/>results</returns>
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         Task<IEnumerable<T>> SelectAsync(string where, object whereParam, long batchId = -1);
+        /// <summary>
+        /// Performs a count query on dataservice table with optional condition params
+        /// </summary>
+        /// <param name="where">If supplied will filter results by this condition</param>
+        /// <param name="whereParam">Parameter object for where condition</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
+        /// <returns></returns>
+        int Count(string where = null, object whereParam = null, long batchId = -1);
+        /// <summary>
+        /// Performs a count query on dataservice table with optional condition params
+        /// </summary>
+        /// <param name="where">If supplied will filter results by this condition</param>
+        /// <param name="whereParam">Parameter object for where condition</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
+        /// <returns></returns>
+        Task<int> CountAsync(string where = null, object whereParam = null, long batchId = -1);
         #endregion
         #region Update
         /// Performs an update on data model using default primary key based condition
@@ -219,6 +235,10 @@ namespace Slacker {
             return await Task.Run(() => { return SelectAsync(where, whereParam, batchId); });
         }
         /// <inheritdoc />
+        public async Task<int> CountAsync(string where = null, object whereParam = null, long batchId = -1) {
+            return await Task.Run(() => { return Count(where, whereParam, batchId); });
+        }
+        /// <inheritdoc />
         public IEnumerable<T> SelectAll(long batchId = -1) {
             return Select("", false, batchId);
         }
@@ -226,6 +246,8 @@ namespace Slacker {
         public abstract IEnumerable<T> Find(object whereParam, long batchId = -1);
         /// <inheritdoc />
         public abstract IEnumerable<T> Select(string where, object whereParam, long batchId = -1);
+        ///<inheritdoc />
+        public abstract int Count(string where = null, object whereParam = null, long batchId = -1);
         #endregion
 
         #region Update
@@ -638,6 +660,23 @@ namespace Slacker {
             );
 
             return results;
+        }
+
+        private string _countQuery;
+        /// <inheritdoc />
+        public override int Count(string where = null, object whereParam = null, long batchId = -1) {
+            // Build Query
+            if (_countQuery == null) {
+                _countQuery = $@"SELECT COUNT({Fields.First()}) AS Count FROM [{Table}] [{Alias}]";
+            }
+
+            var result = Query<dynamic>(
+                _countQuery + (!string.IsNullOrEmpty(where) ? " WHERE " + where : ""),
+                whereParam,
+                batchId
+            ).First();
+
+            return result.Count;
         }
 
         /// <inheritdoc />
