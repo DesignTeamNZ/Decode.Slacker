@@ -7,11 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using FastMember;
 
-namespace Slacker.Views.Controls {
+namespace Slacker.Views.Controls.WinForms {
     public partial class ServiceGrid<T> : UserControl where T : DataModel, new() {
 
+        /// <summary>
+        /// The active DataService for ServiceGrid
+        /// </summary>
         public DataService<T> DataService { get; set; }
+
+        private TypeAccessor _typeAccessor;
+        protected TypeAccessor TypeAccessor {
+            get => _typeAccessor ?? (_typeAccessor = TypeAccessor.Create(typeof(T))
+        }
 
         public IReadOnlyList<T> _completeRecordSet;
         /// <summary>
@@ -45,7 +54,7 @@ namespace Slacker.Views.Controls {
         /// <summary>
         /// The query condition parameter object
         /// </summary>
-        public object QueryConditionObj { get; set; }
+        public object QueryConditionParams { get; set; }
 
         /// <summary>
         /// The page size limit for results. -1 for no page size.
@@ -82,11 +91,33 @@ namespace Slacker.Views.Controls {
         /// </summary>
         public void Render() {
             GridBinding.Clear();
-            ActiveRecordSet.ToList().ForEach(r => GridBinding.Add(r));
+            ActiveRecordSet?.ToList().ForEach(r => GridBinding.Add(r));
             dataGrid.DataSource = GridBinding;
         }
 
-        public virtual async Task LoadRecordSetAsync() {
+
+        private void DataGrid_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e) {
+
+        }
+        
+
+        public string OrderBy(string field, bool desc = true) {
+            if (!PartialLoading) {
+                var workingSet = desc ?
+                    this.CompleteRecordSet.OrderByDescending(t => TypeAccessor[t, field]) :
+                    this.CompleteRecordSet.OrderBy(t => TypeAccessor[t, field]);
+
+                this.ActiveRecordSet = (
+                    PageSize > 1 ?
+                        workingSet.Skip((CurrentPage - 1) * PageSize).Take(PageSize) :
+                        workingSet
+                ).ToList().AsReadOnly();
+            } else {
+                LoadRecordSet()
+            }
+        }
+
+        public virtual async Task LoadRecordSetAsync(string orderBy = null) {
             await Task.Run(new Action(() => { LoadRecordSet(); }));
         }
 
@@ -95,12 +126,14 @@ namespace Slacker.Views.Controls {
                 throw new Exception("Could not load recordset. DataService cannot be null.");
             }
 
+            var queryProps = new QueryProps {
+                WhereSql = QueryCondition,
+                WhereParams = QueryConditionParams
+            };
+
             if (!PartialLoading) {
                 // Do a complete load
-                this.CompleteRecordSet = DataService.Select(
-                    QueryCondition, QueryConditionObj
-                ).ToList().AsReadOnly();
-
+                this.CompleteRecordSet = DataService.Select(queryProps).ToList().AsReadOnly();
                 this.TotalRecordCount = CompleteRecordSet.Count;
 
                 if (PageSize < 1) {
@@ -120,15 +153,16 @@ namespace Slacker.Views.Controls {
             // Do a partal load
             long batchId = DateTime.Now.Ticks;
             DataService.StartBatch(batchId);
-            this.TotalRecordCount = DataService.Count(QueryCondition, QueryConditionObj, batchId);
 
-            // Build the partial query
-            string offsetQuery = $@" LIMIT {PageSize} OFFSET {(CurrentPage - 1) * PageSize}";
-            this.ActiveRecordSet = DataService.Select(
-                QueryCondition + (PageSize < 1 ? "" : offsetQuery),
-                QueryConditionObj,
-                batchId
-            ).ToList().AsReadOnly();
+            // Get Total Record Count from DB
+            this.TotalRecordCount = DataService.Count(queryProps, batchId);
+
+            // Apply partial query
+            queryProps.Limit = PageSize;
+            queryProps.Offset = (CurrentPage - 1) * PageSize; 
+            
+            // Get active Record Set
+            this.ActiveRecordSet = DataService.Select(queryProps).ToList().AsReadOnly();
 
             DataService.EndBatch(batchId);
             RecordSetLoaded?.Invoke(this, null);
@@ -138,7 +172,5 @@ namespace Slacker.Views.Controls {
         public void RaiseOnRecordSetLoaded() {
             RecordSetLoaded?.Invoke(this, null);
         }
-        
-
     }
 }

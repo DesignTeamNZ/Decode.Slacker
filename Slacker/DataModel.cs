@@ -15,14 +15,13 @@ namespace Slacker {
     }
     
     public class DataModel : IDataModel {
-
-        private IList<string> _changedProperties = new List<string>();
+        
         /// <summary>
         /// Keeps track of what properties were changed on Model
         /// </summary>
         [DoNotNotify]
         [Field(Ignored = true)]
-        private IList<string> ChangedProperties { get; set; }
+        private IList<string> ChangedProperties { get; set; } = new List<string>();
 
 
         private bool _changeTrackingDisabled;

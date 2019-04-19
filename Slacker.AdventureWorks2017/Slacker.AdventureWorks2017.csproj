@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{6C68BF76-9663-4206-B482-4722DC2D5B3E}</ProjectGuid>
+    <ProjectGuid>{84D04EA4-099C-441C-A2A3-BE837CD477EA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Slacker.Views</RootNamespace>
-    <AssemblyName>Slacker.Views</AssemblyName>
+    <RootNamespace>Slacker.AdventureWorks2017</RootNamespace>
+    <AssemblyName>Slacker.AdventureWorks2017</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -37,52 +37,25 @@
     <Reference Include="FastMember, Version=1.4.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\FastMember.1.4.1\lib\net461\FastMember.dll</HintPath>
     </Reference>
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controls\WinForms\ServiceGrid.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Controls\WinForms\ServiceGrid.Designer.cs">
-      <DependentUpon>ServiceGrid.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\Wpf\ServiceGrid.xaml.cs">
-      <DependentUpon>ServiceGrid.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Person\Address.cs" />
+    <Compile Include="Person\Person.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Controls\WinForms\ServiceGrid.resx">
-      <DependentUpon>ServiceGrid.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Attributes\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Slacker\Slacker.csproj">
       <Project>{7ae16172-ff7d-4cdf-b16d-5a0faf10d61c}</Project>
       <Name>Slacker</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="Controls\Wpf\ServiceGrid.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

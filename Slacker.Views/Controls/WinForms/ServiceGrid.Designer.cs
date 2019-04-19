@@ -1,4 +1,4 @@
-﻿namespace Slacker.Views.Controls {
+﻿namespace Slacker.Views.Controls.WinForms {
     partial class ServiceGrid<T> {
         /// <summary> 
         /// Required designer variable.
@@ -27,21 +27,22 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             this.SuspendLayout();
             // 
-            // dataGridView1
+            // dataGrid
             // 
             this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGrid.Location = new System.Drawing.Point(0, 0);
-            this.dataGrid.Name = "dataGridView1";
+            this.dataGrid.Name = "dataGrid";
             this.dataGrid.Size = new System.Drawing.Size(650, 420);
             this.dataGrid.TabIndex = 0;
+            this.dataGrid.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGrid_ColumnHeaderMouseClick);
             // 
-            // DataGrid
+            // ServiceGrid
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.dataGrid);
-            this.Name = "DataGrid";
+            this.Name = "ServiceGrid";
             this.Size = new System.Drawing.Size(650, 420);
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
             this.ResumeLayout(false);

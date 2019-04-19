@@ -17,6 +17,23 @@ using System.Threading;
 
 namespace Slacker {
 
+    public class SqlProps {
+        public string WhereSql { get; set; }
+        public object WhereParams { get; set; }
+
+        public Func<string, string> PostEditSQL { get; set; } = sql => sql;
+    }
+
+    public class DeleteProps : SqlProps {
+        public int? Top { get; set; }
+    }
+
+    public class QueryProps : SqlProps {
+        public string OrderBy { get; set; }
+        public int? Offset { get; set; }
+        public int? Limit { get; set; }
+    }
+
     /// <summary>
     /// Used as a marker for reflection. Cast to IDataService<T> to use.
     /// </summary>
@@ -75,6 +92,13 @@ namespace Slacker {
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         IEnumerable<T> Select(string where, object whereParam, long batchId = -1);
         /// <summary>
+        /// Perform a select query
+        /// </summary>
+        /// <param name="queryProps">Query properties</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
+        /// <returns></returns>
+        IEnumerable<T> Select(QueryProps queryProps, long batchId = -1);
+        /// <summary>
         /// Select all records async
         /// </summary>
         /// <returns>IEnumerable<typeparamref name="T"/> results</returns>
@@ -96,21 +120,26 @@ namespace Slacker {
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         Task<IEnumerable<T>> SelectAsync(string where, object whereParam, long batchId = -1);
         /// <summary>
-        /// Performs a count query on dataservice table with optional condition params
+        /// Perform an async select query
         /// </summary>
-        /// <param name="where">If supplied will filter results by this condition</param>
-        /// <param name="whereParam">Parameter object for where condition</param>
+        /// <param name="queryProps">Query properties</param>
         /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
         /// <returns></returns>
-        int Count(string where = null, object whereParam = null, long batchId = -1);
+        Task<IEnumerable<T>> SelectAsync(QueryProps queryProps, long batchId = -1);
         /// <summary>
         /// Performs a count query on dataservice table with optional condition params
         /// </summary>
-        /// <param name="where">If supplied will filter results by this condition</param>
-        /// <param name="whereParam">Parameter object for where condition</param>
+        /// <param name="queryProps">Sql props</param>
         /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
         /// <returns></returns>
-        Task<int> CountAsync(string where = null, object whereParam = null, long batchId = -1);
+        int Count(QueryProps queryProps, long batchId = -1);
+        /// <summary>
+        /// Performs a count query on dataservice table with optional condition params
+        /// </summary>
+        /// <param name="queryProps">Sql props</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against.</param>
+        /// <returns></returns>
+        Task<int> CountAsync(QueryProps queryProps, long batchId = -1);
         #endregion
         #region Update
         /// Performs an update on data model using default primary key based condition
@@ -164,6 +193,12 @@ namespace Slacker {
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         void Delete(string where, object whereParam, long batchId = -1);
         /// <summary>
+        /// Delete records based on deleteProps conditions
+        /// </summary>
+        /// <param name="deleteProps">Query props</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        void Delete(DeleteProps deleteProps, long batchId = -1);
+        /// <summary>
         /// Async Global Delete on Table
         /// </summary>
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
@@ -180,6 +215,12 @@ namespace Slacker {
         /// <param name="whereParam">Condition parameter</param>
         /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
         Task DeleteAsync(string where, object whereParam, long batchId = -1);
+        /// <summary>
+        /// Delete records based on deleteProps conditions
+        /// </summary>
+        /// <param name="deleteProps">Sql props</param>
+        /// <param name="batchId">Specifies which associated batch this method should be called against. Defaults to thread batch</param>
+        Task DeleteAsync(DeleteProps deleteProps, long batchId = -1);
         #endregion
 
         #region Batches
@@ -232,22 +273,30 @@ namespace Slacker {
         }
         /// <inheritdoc />
         public async Task<IEnumerable<T>> SelectAsync(string where, object whereParam, long batchId = -1) {
-            return await Task.Run(() => { return SelectAsync(where, whereParam, batchId); });
+            return await Task.Run(() => { return Select(where, whereParam, batchId); });
         }
         /// <inheritdoc />
-        public async Task<int> CountAsync(string where = null, object whereParam = null, long batchId = -1) {
-            return await Task.Run(() => { return Count(where, whereParam, batchId); });
+        public async Task<IEnumerable<T>> SelectAsync(QueryProps queryProps, long batchId = -1) {
+            return await Task.Run(() => { return Select(queryProps, batchId); });
+        }
+        /// <inheritdoc />
+        public async Task<int> CountAsync(QueryProps queryProps, long batchId = -1) {
+            return await Task.Run(() => { return Count(queryProps, batchId); });
         }
         /// <inheritdoc />
         public IEnumerable<T> SelectAll(long batchId = -1) {
-            return Select("", false, batchId);
+            return Select(new QueryProps(), batchId);
         }
         /// <inheritdoc />
-        public abstract IEnumerable<T> Find(object whereParam, long batchId = -1);
+        public IEnumerable<T> Select(string whereSql, object whereParams, long batchId = -1) {
+            return Select(new QueryProps { WhereSql = whereSql, WhereParams = whereParams }, batchId);
+        }
         /// <inheritdoc />
-        public abstract IEnumerable<T> Select(string where, object whereParam, long batchId = -1);
-        ///<inheritdoc />
-        public abstract int Count(string where = null, object whereParam = null, long batchId = -1);
+        public abstract IEnumerable<T> Find(object whereParams, long batchId = -1);
+        /// <inheritdoc />
+        public abstract IEnumerable<T> Select(QueryProps queryProps, long batchId = -1);
+        /// <inheritdoc />
+        public abstract int Count(QueryProps queryProps, long batchId = -1);
         #endregion
 
         #region Update
@@ -294,13 +343,21 @@ namespace Slacker {
             await Task.Run(() => { Delete(where, whereParam, batchId); });
         }
         /// <inheritdoc />
+        public async Task DeleteAsync(DeleteProps deleteProps, long batchId = -1) {
+            await Task.Run(() => { Delete(deleteProps, batchId); });
+        }
+        /// <inheritdoc />
         public void DeleteAll(long batchId = -1) {
-            Delete("", null, batchId);
+            Delete((DeleteProps) null, batchId);
+        }
+        /// <inheritdoc />
+        public void Delete(string whereSql, object whereParams, long batchId = -1) {
+            Delete(new DeleteProps {WhereSql = whereSql, WhereParams = whereParams}, batchId);
         }
         /// <inheritdoc />
         public abstract void Delete(T model, long batchId = -1);
         /// <inheritdoc />
-        public abstract void Delete(string where, object whereParam, long batchId = -1);
+        public abstract void Delete(DeleteProps deleteProps, long batchId = -1);
         #endregion
 
         #region Batches
@@ -351,7 +408,7 @@ namespace Slacker {
             get {
                 if (_queryFieldCols == null) {
                     _queryFieldCols = string.Join(",", Fields.Select(
-                            field => $@"[{field.TableField}]"
+                            field => field.TableFieldSql
                     ));
                 }
                 return _queryFieldCols;
@@ -367,7 +424,7 @@ namespace Slacker {
                 if (_queryNonKeyFieldCols == null) {
                     _queryNonKeyFieldCols = string.Join(",",
                         NonGeneratedFields.Select(
-                            field => $@"[{field.TableField}]"
+                            field => field.TableFieldSql
                         )
                     );
                 }
@@ -417,7 +474,7 @@ namespace Slacker {
                 if (_querySelects == null) {
                     _querySelects = string.Join(",",
                         Fields.Select(
-                            field => $"[{Alias}].[{field.TableField}] AS [{field.ModelField}]"
+                            field => $"{AliasSql}.{field.TableFieldSql} AS [{field.ModelField}]"
                         )
                     );
                 }
@@ -434,7 +491,7 @@ namespace Slacker {
                 if (_queryDefaultUpdateRefs == null) {
                     _queryDefaultUpdateRefs = string.Join(",",
                         NonGeneratedFields.Select(
-                            field => $@"[{Alias}].[{field.TableField}] = @{field.ModelField}"
+                            field => $@"{AliasSql}.{field.TableFieldSql} = @{field.ModelField}"
                         )
                     );
                 }
@@ -467,13 +524,19 @@ namespace Slacker {
         public string Table {
             get {
                 if(_table == null) {
-                    _table = TableAttribute?.Name ?? typeof(T).Name;
+                    _table = (TableAttribute?.Name ?? typeof(T).Name);
                 }
                 return _table;
             }
             set {
                 _table = value;
             }
+        }
+        /// <summary>
+        /// Database Table with SQL Formatting
+        /// </summary>
+        public string TableSql {
+            get => $"[{Table.Replace(".", "].[")}]";
         }
 
         private string _alias;
@@ -492,8 +555,12 @@ namespace Slacker {
                 _alias = value;
             }
         }
-
-        
+        /// <summary>
+        /// Database Table Alias with SQL FOrmatting
+        /// </summary>
+        public string AliasSql {
+            get => $"[{Alias.Replace(".", "].[")}]";
+        }
         private string _defaultCondition;
         /// <summary>
         /// Default condition based on Primary Key
@@ -502,7 +569,7 @@ namespace Slacker {
             get {
                 if (_defaultCondition == null) {
                     _defaultCondition = string.Join(" AND ", PrimaryKey.Select(
-                        field => $@"([{Alias}].[{field.TableField}] = @{field.ModelField})"
+                        field => $@"({AliasSql}.{field.TableFieldSql} = @{field.ModelField})"
                     ));
                 }
                 return _defaultCondition;
@@ -605,7 +672,7 @@ namespace Slacker {
             // Build Insert Query
             if(_insertQuery == null) { 
                 _insertQuery = $@"
-                    INSERT INTO [{Table}] ({QueryNonKeyFieldCols}) 
+                    INSERT INTO {TableSql} ({QueryNonKeyFieldCols}) 
                     VALUES ({QueryNonKeyGeneratedModelRefs});";
             }
 
@@ -641,18 +708,35 @@ namespace Slacker {
         
         private string _selectQuery;
         /// <inheritdoc />
-        public override IEnumerable<T> Select(string where, object whereParam, long batchId = -1) {
-            // Build Query
-            if (_selectQuery == null) {
-                _selectQuery = $@"SELECT {QuerySelects} FROM [{Table}] [{Alias}]";
+        public override IEnumerable<T> Select(QueryProps queryProps, long batchId = -1) {
+
+            // Build base query
+            var query = _selectQuery ?? (
+                _selectQuery = $@"SELECT {QuerySelects} FROM {TableSql} {AliasSql}"
+            );
+            
+            // Where
+            if (!string.IsNullOrWhiteSpace(queryProps?.WhereSql)) {
+                query += " WHERE " + queryProps.WhereSql;
+            }
+
+            // Order By
+            if (queryProps?.OrderBy != null) {
+                query += " ORDER BY " + queryProps.OrderBy;
             }
             
+            // Offset
+            if (queryProps?.Offset != null) {
+                query += " OFFSET " + queryProps.Offset;
+            }
+
+            // Limit
+            if (queryProps?.Limit != null) {
+                query += " LIMIT " + queryProps.Limit;
+            }
+
             // Select with condition
-            var results = Query<T>(
-                _selectQuery + (!string.IsNullOrEmpty(where) ?  " WHERE " + where : ""), 
-                whereParam,
-                batchId
-            );
+            var results = Query<T>(queryProps.PostEditSQL(query), queryProps?.WhereParams, batchId);
 
             // Clear model changes
             results.ToList().ForEach(
@@ -661,18 +745,34 @@ namespace Slacker {
 
             return results;
         }
+        
 
         private string _countQuery;
         /// <inheritdoc />
-        public override int Count(string where = null, object whereParam = null, long batchId = -1) {
+        public override int Count(QueryProps queryProps, long batchId = -1) {
             // Build Query
-            if (_countQuery == null) {
-                _countQuery = $@"SELECT COUNT({Fields.First()}) AS Count FROM [{Table}] [{Alias}]";
+            var query = _countQuery ?? (
+                _countQuery = $@"SELECT COUNT({Fields.First()}) AS Count FROM {TableSql} {AliasSql}"
+            );
+            // Where
+            if (!string.IsNullOrWhiteSpace(queryProps?.WhereSql)) {
+                query += " WHERE " + queryProps.WhereSql;
             }
 
+            // Offset
+            if (queryProps?.Offset != null) {
+                query += " OFFSET " + queryProps.Offset;
+            }
+
+            // Limit
+            if (queryProps?.Limit != null) {
+                query += " LIMIT " + queryProps.Limit;
+            }
+
+            // Query Result
             var result = Query<dynamic>(
-                _countQuery + (!string.IsNullOrEmpty(where) ? " WHERE " + where : ""),
-                whereParam,
+                queryProps.PostEditSQL(query), 
+                queryProps?.WhereParams, 
                 batchId
             ).First();
 
@@ -708,13 +808,13 @@ namespace Slacker {
             }
 
             var updateFieldStr = string.Join(", ", (updateFieldsInfo.Select(
-                field => $"[{Alias}].[{field.TableField}]=@{field.ModelField}"
+                field => $"{AliasSql}.{field.TableFieldSql}=@{field.ModelField}"
             )));
 
             // Do Update
             string update = $@"
-                UPDATE [{Alias}] SET {updateFieldStr}
-                FROM [{Table}] [{Alias}]
+                UPDATE {AliasSql} SET {updateFieldStr}
+                FROM {TableSql} {AliasSql}
                 WHERE {where ?? DefaultCondition}";
 
             Execute(update, param, batchId);
@@ -731,57 +831,59 @@ namespace Slacker {
         }
 
         /// <inheritdoc />
-        public override void Delete(string where, object whereParam, long batchId = -1) {
-            string query = $@"DELETE FROM {Table}";
-
-            if (string.IsNullOrEmpty(where)) {
-                // Runtime "Sanity" Check
-                if (!AllowGlobalDelete) {
-                    throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
-                }
-                // Delete All
-                Execute(query, null, batchId);
-                return;
+        public override void Delete(DeleteProps updateProps, long batchId = -1) {
+            // Runtime "Sanity" Check for Global
+            if (!AllowGlobalDelete && string.IsNullOrWhiteSpace(updateProps?.WhereSql as string)) {
+                throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
             }
             
-
             // Runtime "Sanity" Check
             if (!AllowDelete) {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
+            
+            string query = updateProps.Top != null ?
+                $"DELETE TOP({updateProps.Top}) FROM {TableSql} {AliasSql}" :
+                $"DELETE FROM {TableSql} {AliasSql}";
+
+            // Condition
+            if (!string.IsNullOrWhiteSpace(updateProps?.WhereSql as string)) {
+                query += " WHERE " + updateProps.WhereSql; 
+            }
+
             // Delete by Condition
-            Execute(query + " WHERE " + where, whereParam, batchId);
+            Execute(updateProps.PostEditSQL(query), updateProps?.WhereParams, batchId);
         }
 
         /// <summary>
         /// Performs a standard Dapper QueryAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public IEnumerable<U> Query<U>(string query, object parameter = null, long batchId = -1) {
+        public IEnumerable<U> Query<U>(string sql, object sqlParams = null, long batchId = -1) {
             try {
                 if (batchId == -1) {
                     batchId = Thread.CurrentThread.ManagedThreadId;
                 }
 
-                return ConnectionManager.ExecuteQuery<U>(query, parameter, batchId);
+                return ConnectionManager.ExecuteQuery<U>(sql, sqlParams, batchId);
             }
             catch (SqlException e) {
-                throw new SlackerSqlException(e, query, parameter);
+                throw new SlackerSqlException(e, sql, sqlParams);
             }
         }
 
         /// <summary>
         /// Performs a standard Dapper ExecuteAsync but wraps SqlExceptions with SlackerSqlException
         /// </summary>
-        public void Execute(string query, object parameter = null, long batchId = -1) {
+        public void Execute(string sql, object sqlParams = null, long batchId = -1) {
             try {
                 if (batchId == -1) {
                     batchId = Thread.CurrentThread.ManagedThreadId;
                 }
 
-                ConnectionManager.ExecuteUpdate(query, parameter, batchId);
+                ConnectionManager.ExecuteUpdate(sql, sqlParams, batchId);
             }
             catch (SqlException e) {
-                throw new SlackerSqlException(e, query, parameter);
+                throw new SlackerSqlException(e, sql, sqlParams);
             }
         }
 
@@ -835,4 +937,6 @@ namespace Slacker {
         #endregion
 
     }
+
+
 }

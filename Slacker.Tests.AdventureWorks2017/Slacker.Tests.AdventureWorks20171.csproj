@@ -10,4 +10,8 @@
     <None Remove="Sql\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Slacker\Slacker.csproj" />
+  </ItemGroup>
+
 </Project>
