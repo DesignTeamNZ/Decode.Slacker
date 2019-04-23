@@ -7,58 +7,49 @@ using FastMember;
 
 namespace Slacker.Views.Grid {
 
-    public interface IGridPagination {
-        int CurrentPage { get; }
-        int PageCount { get; }
-        int TotalRecordCount { get; }
-
-        string OrderByField { get; }
-        bool OrderByDesc { get; }
-
-        event EventHandler OnRecordSetLoaded;
-
-        int? PageSize { get; set; }
-
-        void OrderBy(string field, bool desc);
-        void SetPage(int pageNo);
-
-        void Load();
-
-    }
-    
-    public interface IGridPagination<T> : IGridPagination {
-        IEnumerable<T> RecordSet { get; }
-    }
-
     public abstract class DataServiceGridPagination<T> : IGridPagination<T> where T : DataModel, new() {
 
-        public DataService<T> DataService { get; protected set; }
+        public DataService<T> DataService { get; set; }
         public IEnumerable<T> RecordSet { get; protected set; }
+        IEnumerable<object> IGridPagination.RecordSet => RecordSet;
 
         public int CurrentPage { get; protected set; } = 1;
         public virtual int TotalRecordCount { get; protected set; }
+        public int? PageSize { get; protected set; }
+
         public int PageCount {
             get {
                 if (PageSize == null || PageSize < 1 || TotalRecordCount < 1) {
                     return 1;
                 }
 
-                return (int) Math.Ceiling((float) TotalRecordCount / (float) PageSize);
+                return (int) Math.Ceiling((float)TotalRecordCount / (float)PageSize);
             }
         }
+
+        protected DataServiceGridPagination() { }
 
         public string OrderByField { get; protected set; }
         public bool OrderByDesc { get; protected set; }
 
         public abstract event EventHandler OnRecordSetLoaded;
 
-        public int? PageSize { get; set; }
         public string QueryCondition { get; set; }
         public object QueryConditionParams { get; set; }
-        
+
+
         public abstract void OrderBy(string field, bool desc);
         public abstract void SetPage(int pageNo);
+        public abstract void SetPageSize(int? value);
         public abstract void Load();
+
+        public static DataServiceGridPagination<T> Create(bool usePartialLoading, int pageSize = 100) {
+            return (usePartialLoading ?
+                (DataServiceGridPagination<T>)new PartialLoadingGridDataServiceProvider<T>() { PageSize = pageSize } :
+                (DataServiceGridPagination<T>)new PreLoadingGridDataServiceProvider<T>() { PageSize = pageSize }
+            );
+        }
+        
     }
 
 
@@ -75,6 +66,11 @@ namespace Slacker.Views.Grid {
             get => _typeAccessor ?? (_typeAccessor = TypeAccessor.Create(typeof(T)));
         }
 
+
+        public override void SetPageSize(int? value) {
+            this.PageSize = value;
+            ApplyFilters();
+        }
 
         public override void OrderBy(string field, bool desc) {
             this.OrderByField = field;
@@ -93,6 +89,9 @@ namespace Slacker.Views.Grid {
 
         protected void ApplyFilters() {
             var workingSet = MasterRecordSet;
+            if (workingSet == null) {
+                return;
+            }
 
             // Order
             if (OrderByField != null) {
@@ -135,7 +134,7 @@ namespace Slacker.Views.Grid {
     public class PartialLoadingGridDataServiceProvider<T> : DataServiceGridPagination<T> where T : DataModel, new() {
 
         public override event EventHandler OnRecordSetLoaded;
-        
+
         public override void OrderBy(string field, bool desc) {
             this.OrderByField = field;
             this.OrderByDesc = desc;
@@ -150,7 +149,11 @@ namespace Slacker.Views.Grid {
             this.CurrentPage = pageNo;
             Load();
         }
-        
+        public override void SetPageSize(int? value) {
+            this.PageSize = value;
+            Load();
+        }
+
         public override void Load() {
             if (DataService == null) {
                 throw new Exception("Could not load recordset. DataService cannot be null.");

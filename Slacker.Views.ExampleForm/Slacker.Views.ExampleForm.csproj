@@ -52,19 +52,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FormPersonServiceGrid.cs">
+    <Compile Include="PaginationGridViewForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FormPersonServiceGrid.Designer.cs">
-      <DependentUpon>FormPersonServiceGrid.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\Controls\PersonServiceGrid.cs">
-      <SubType>UserControl</SubType>
+    <Compile Include="PaginationGridViewForm.Designer.cs">
+      <DependentUpon>PaginationGridViewForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="FormPersonServiceGrid.resx">
-      <DependentUpon>FormPersonServiceGrid.cs</DependentUpon>
+    <EmbeddedResource Include="PaginationGridViewForm.resx">
+      <DependentUpon>PaginationGridViewForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

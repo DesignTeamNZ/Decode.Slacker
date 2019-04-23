@@ -13,7 +13,7 @@ namespace Slacker.Views.ExampleForm {
         static void Main() {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormPersonServiceGrid());
+            Application.Run(new PaginationGridViewForm());
         }
     }
 }

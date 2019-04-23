@@ -5,9 +5,11 @@ VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slacker", "Slacker\Slacker.csproj", "{7AE16172-FF7D-4CDF-B16D-5A0FAF10D61C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slacker.Tests", "Slacker.Tests\Slacker.Tests.csproj", "{FDA42EB9-5A41-475D-9349-307D6D8829D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slacker.Views", "Slacker.Views\Slacker.Views.csproj", "{6C68BF76-9663-4206-B482-4722DC2D5B3E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Slacker.Tests.AdventureWorks2017", "Slacker.Tests.AdventureWorks2017\Slacker.Tests.AdventureWorks2017.csproj", "{E63AE1FA-1628-4D9F-A87B-7022831FB77B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slacker.Views.ExampleForm", "Slacker.Views.ExampleForm\Slacker.Views.ExampleForm.csproj", "{4A248BC8-3EE9-40CD-BC0F-E08A1E2CFF38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slacker.AdventureWorks2017", "Slacker.AdventureWorks2017\Slacker.AdventureWorks2017.csproj", "{84D04EA4-099C-441C-A2A3-BE837CD477EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,14 +21,18 @@ Global
 		{7AE16172-FF7D-4CDF-B16D-5A0FAF10D61C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AE16172-FF7D-4CDF-B16D-5A0FAF10D61C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AE16172-FF7D-4CDF-B16D-5A0FAF10D61C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FDA42EB9-5A41-475D-9349-307D6D8829D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FDA42EB9-5A41-475D-9349-307D6D8829D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FDA42EB9-5A41-475D-9349-307D6D8829D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FDA42EB9-5A41-475D-9349-307D6D8829D5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E63AE1FA-1628-4D9F-A87B-7022831FB77B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E63AE1FA-1628-4D9F-A87B-7022831FB77B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E63AE1FA-1628-4D9F-A87B-7022831FB77B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E63AE1FA-1628-4D9F-A87B-7022831FB77B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C68BF76-9663-4206-B482-4722DC2D5B3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C68BF76-9663-4206-B482-4722DC2D5B3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C68BF76-9663-4206-B482-4722DC2D5B3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C68BF76-9663-4206-B482-4722DC2D5B3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A248BC8-3EE9-40CD-BC0F-E08A1E2CFF38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A248BC8-3EE9-40CD-BC0F-E08A1E2CFF38}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A248BC8-3EE9-40CD-BC0F-E08A1E2CFF38}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A248BC8-3EE9-40CD-BC0F-E08A1E2CFF38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84D04EA4-099C-441C-A2A3-BE837CD477EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84D04EA4-099C-441C-A2A3-BE837CD477EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84D04EA4-099C-441C-A2A3-BE837CD477EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84D04EA4-099C-441C-A2A3-BE837CD477EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

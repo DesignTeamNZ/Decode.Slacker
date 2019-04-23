@@ -1,5 +1,5 @@
-﻿namespace Slacker.Views.Controls.WinForms {
-    partial class ServiceGrid<T> {
+﻿namespace Slacker.Views.WinForms {
+    partial class PaginationGridView {
         /// <summary> 
         /// Required designer variable.
         /// </summary>
@@ -23,34 +23,34 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
-            this.dataGrid = new System.Windows.Forms.DataGridView();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
-            // dataGrid
+            // dataGridView1
             // 
-            this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGrid.Location = new System.Drawing.Point(0, 0);
-            this.dataGrid.Name = "dataGrid";
-            this.dataGrid.Size = new System.Drawing.Size(650, 420);
-            this.dataGrid.TabIndex = 0;
-            this.dataGrid.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGrid_ColumnHeaderMouseClick);
+            this.dataGridView1.AllowUserToOrderColumns = true;
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridView1.Location = new System.Drawing.Point(0, 0);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.Size = new System.Drawing.Size(557, 391);
+            this.dataGridView1.TabIndex = 1;
             // 
-            // ServiceGrid
+            // PaginationGridView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.dataGrid);
-            this.Name = "ServiceGrid";
-            this.Size = new System.Drawing.Size(650, 420);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
+            this.Controls.Add(this.dataGridView1);
+            this.Name = "PaginationGridView";
+            this.Size = new System.Drawing.Size(557, 391);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.DataGridView dataGrid;
+        private System.Windows.Forms.DataGridView dataGridView1;
     }
 }

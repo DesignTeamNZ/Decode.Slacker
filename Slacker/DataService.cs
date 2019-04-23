@@ -29,6 +29,7 @@ namespace Slacker {
     }
 
     public class QueryProps : SqlProps {
+        public int? Top { get; set; }
         public string OrderBy { get; set; }
         public int? Offset { get; set; }
         public int? Limit { get; set; }
@@ -707,14 +708,23 @@ namespace Slacker {
         }
         
         private string _selectQuery;
+        private string _selectTopQuery;
         /// <inheritdoc />
         public override IEnumerable<T> Select(QueryProps queryProps, long batchId = -1) {
 
             // Build base query
-            var query = _selectQuery ?? (
-                _selectQuery = $@"SELECT {QuerySelects} FROM {TableSql} {AliasSql}"
-            );
-            
+
+            string query = null;
+            if (queryProps.Top != null && queryProps.Top > 0) {
+                query = _selectTopQuery ?? (
+                    _selectTopQuery = $@"SELECT TOP({queryProps.Limit}) {QuerySelects} FROM {TableSql} {AliasSql}"
+                );
+            } else {
+                query = _selectQuery ?? (
+                    _selectQuery = $@"SELECT {QuerySelects} FROM {TableSql} {AliasSql}"
+                );
+            }
+
             // Where
             if (!string.IsNullOrWhiteSpace(queryProps?.WhereSql)) {
                 query += " WHERE " + queryProps.WhereSql;
@@ -723,17 +733,26 @@ namespace Slacker {
             // Order By
             if (queryProps?.OrderBy != null) {
                 query += " ORDER BY " + queryProps.OrderBy;
-            }
-            
-            // Offset
-            if (queryProps?.Offset != null) {
-                query += " OFFSET " + queryProps.Offset;
+            } else {
+                query += " ORDER BY (SELECT NULL)";
             }
 
-            // Limit
-            if (queryProps?.Limit != null) {
-                query += " LIMIT " + queryProps.Limit;
+            // Offset
+            bool offsetDefined = (queryProps?.Offset != null && queryProps?.Offset > 0);
+            if (offsetDefined) {
+                query += " OFFSET " + queryProps.Offset + " ROWS";
             }
+            
+            // Fetch
+            if (queryProps?.Limit != null && queryProps?.Limit > 0) {
+                // Limit requires offset, top should be used here instead but meh
+                if (!offsetDefined) {
+                    query += " OFFSET 0 ROWS"; 
+                }
+
+                query += " FETCH NEXT " + queryProps.Limit + " ROWS ONLY";
+            }
+
 
             // Select with condition
             var results = Query<T>(queryProps.PostEditSQL(query), queryProps?.WhereParams, batchId);
@@ -752,7 +771,7 @@ namespace Slacker {
         public override int Count(QueryProps queryProps, long batchId = -1) {
             // Build Query
             var query = _countQuery ?? (
-                _countQuery = $@"SELECT COUNT({Fields.First()}) AS Count FROM {TableSql} {AliasSql}"
+                _countQuery = $@"SELECT COUNT({Fields.First().TableFieldSql}) AS Count FROM {TableSql} {AliasSql}"
             );
             // Where
             if (!string.IsNullOrWhiteSpace(queryProps?.WhereSql)) {
@@ -761,14 +780,9 @@ namespace Slacker {
 
             // Offset
             if (queryProps?.Offset != null) {
-                query += " OFFSET " + queryProps.Offset;
+                query += " OFFSET " + queryProps.Offset + " Rows";
             }
-
-            // Limit
-            if (queryProps?.Limit != null) {
-                query += " LIMIT " + queryProps.Limit;
-            }
-
+            
             // Query Result
             var result = Query<dynamic>(
                 queryProps.PostEditSQL(query), 
