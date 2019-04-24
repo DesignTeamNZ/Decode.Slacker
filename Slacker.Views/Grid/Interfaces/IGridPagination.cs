@@ -16,21 +16,45 @@ namespace Slacker.Views.Grid {
         string OrderByField { get; }
         bool OrderByDesc { get; }
 
-        event EventHandler OnRecordSetLoaded;
-
-
         void OrderBy(string field, bool desc);
         void SetPage(int pageNo);
         void SetPageSize(int? value);
-
         void Load();
 
+        event EventHandler RecordSetLoaded;
+        IList<dynamic> RecordSet { get; }
 
-        IEnumerable<object> RecordSet { get; }
+        bool RaisePreModelEditedEvent(object model, string field);
+        void RaiseModelEditedEvent(object model, string field);
+        void RaiseModelDeletedEvent(object model);
 
     }
     
     public interface IGridPagination<T> : IGridPagination {
-        new IEnumerable<T> RecordSet { get; }
+        event EventHandler<PreModelEditedEventArgs<T>> PreModelEdited;
+        event EventHandler<ModelEditedEventArgs<T>> ModelEdited;
+        event EventHandler<ModelDeletedEventArgs<T>> ModelDeleted;
+        new IList<T> RecordSet { get; }
+
+        bool RaisePreModelEditedEvent(T model, string field);
+        void RaiseModelEditedEvent(T model, string field);
+        void RaiseModelDeletedEvent(T model);
     }
+
+    public class PreModelEditedEventArgs<T> : EventArgs {
+        public bool Cancelled;
+        public T Model;
+        public string Field;
+    }
+
+    public class ModelEditedEventArgs<T> : EventArgs {
+        public T Model;
+        public string Field;
+    }
+
+    public class ModelDeletedEventArgs<T> : EventArgs {
+        public T Model;
+    }
+
+
 }

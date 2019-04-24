@@ -9,39 +9,78 @@ namespace Slacker.Views.Grid {
 
     public abstract class DataServiceGridPagination<T> : IGridPagination<T> where T : DataModel, new() {
 
+
+        public abstract event EventHandler RecordSetLoaded;
+
+        public event EventHandler<PreModelEditedEventArgs<T>> PreModelEdited;
+        public event EventHandler<ModelEditedEventArgs<T>> ModelEdited;
+        public event EventHandler<ModelDeletedEventArgs<T>> ModelDeleted;
+
+        public bool RaisePreModelEditedEvent(object model, string field)
+            => RaisePreModelEditedEvent((T) model, field);
+
+        public void RaiseModelEditedEvent(object model, string field)
+            => RaiseModelEditedEvent((T) model, field);
+
+        public void RaiseModelDeletedEvent(object model)
+            => RaiseModelDeletedEvent((T) model);
+        
         public DataService<T> DataService { get; set; }
-        public IEnumerable<T> RecordSet { get; protected set; }
-        IEnumerable<object> IGridPagination.RecordSet => RecordSet;
+
+        public IList<T> RecordSet { get; protected set; }
+        IList<object> IGridPagination.RecordSet {
+            get => RecordSet.Cast<object>().ToList(); // TODO: Is this too slow?
+        }
 
         public int CurrentPage { get; protected set; } = 1;
-        public virtual int TotalRecordCount { get; protected set; }
         public int? PageSize { get; protected set; }
+        public virtual int TotalRecordCount { get; protected set; }
 
+        protected DataServiceGridPagination() { }
+        
+        public string OrderByField { get; protected set; }
+        public bool OrderByDesc { get; protected set; }
+
+        public string QueryCondition { get; set; }
+        public object QueryConditionParams { get; set; }
+        
+        public abstract void OrderBy(string field, bool desc);
+        public abstract void SetPage(int pageNo);
+        public abstract void SetPageSize(int? value);
+        public abstract void Load();
+        
         public int PageCount {
             get {
                 if (PageSize == null || PageSize < 1 || TotalRecordCount < 1) {
                     return 1;
                 }
 
-                return (int) Math.Ceiling((float)TotalRecordCount / (float)PageSize);
+                return (int)Math.Ceiling((float)TotalRecordCount / (float)PageSize);
             }
         }
 
-        protected DataServiceGridPagination() { }
+        public bool RaisePreModelEditedEvent(T model, string field) {
+            var eventArgs = new PreModelEditedEventArgs<T>() {
+                Model = model,
+                Field = field
+            };
 
-        public string OrderByField { get; protected set; }
-        public bool OrderByDesc { get; protected set; }
+            PreModelEdited?.Invoke(this, eventArgs);
+            return eventArgs.Cancelled;
+        }
 
-        public abstract event EventHandler OnRecordSetLoaded;
+        public void RaiseModelEditedEvent(T model, string field) {
+            ModelEdited?.Invoke(this, new ModelEditedEventArgs<T>() {
+                Model = model,
+                Field = field
+            });
+        }
 
-        public string QueryCondition { get; set; }
-        public object QueryConditionParams { get; set; }
-
-
-        public abstract void OrderBy(string field, bool desc);
-        public abstract void SetPage(int pageNo);
-        public abstract void SetPageSize(int? value);
-        public abstract void Load();
+        public void RaiseModelDeletedEvent(T model) {
+            ModelDeleted?.Invoke(this, new ModelDeletedEventArgs<T>() {
+                Model = model
+            });
+        }
 
         public static DataServiceGridPagination<T> Create(bool usePartialLoading, int pageSize = 100) {
             return (usePartialLoading ?
@@ -49,13 +88,12 @@ namespace Slacker.Views.Grid {
                 (DataServiceGridPagination<T>)new PreLoadingGridDataServiceProvider<T>() { PageSize = pageSize }
             );
         }
-        
     }
 
 
     public class PreLoadingGridDataServiceProvider<T> : DataServiceGridPagination<T> where T : DataModel, new() {
 
-        public override event EventHandler OnRecordSetLoaded;
+        public override event EventHandler RecordSetLoaded;
 
         public IEnumerable<T> MasterRecordSet { get; protected set; }
         public override int TotalRecordCount { get => MasterRecordSet.Count(); }
@@ -107,7 +145,7 @@ namespace Slacker.Views.Grid {
 
             // Set RecordSet
             RecordSet = workingSet.ToList().AsReadOnly();
-            OnRecordSetLoaded?.Invoke(this, null);
+            RecordSetLoaded?.Invoke(this, null);
         }
 
         public override void Load() {
@@ -133,7 +171,7 @@ namespace Slacker.Views.Grid {
 
     public class PartialLoadingGridDataServiceProvider<T> : DataServiceGridPagination<T> where T : DataModel, new() {
 
-        public override event EventHandler OnRecordSetLoaded;
+        public override event EventHandler RecordSetLoaded;
 
         public override void OrderBy(string field, bool desc) {
             this.OrderByField = field;
@@ -185,7 +223,7 @@ namespace Slacker.Views.Grid {
 
             // Get active Record Set
             this.RecordSet = DataService.Select(queryProps).ToList().AsReadOnly();
-            OnRecordSetLoaded?.Invoke(this, null);
+            RecordSetLoaded?.Invoke(this, null);
         }
 
 

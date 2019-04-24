@@ -845,9 +845,9 @@ namespace Slacker {
         }
 
         /// <inheritdoc />
-        public override void Delete(DeleteProps updateProps, long batchId = -1) {
+        public override void Delete(DeleteProps deleteProps, long batchId = -1) {
             // Runtime "Sanity" Check for Global
-            if (!AllowGlobalDelete && string.IsNullOrWhiteSpace(updateProps?.WhereSql as string)) {
+            if (!AllowGlobalDelete && string.IsNullOrWhiteSpace(deleteProps?.WhereSql as string)) {
                 throw new Exception("DataService.AllowDeleteAll must be enabled to delete all records.");
             }
             
@@ -856,17 +856,17 @@ namespace Slacker {
                 throw new Exception("DataService.AllowDelete must be enabled to delete records");
             }
             
-            string query = updateProps.Top != null ?
-                $"DELETE TOP({updateProps.Top}) FROM {TableSql} {AliasSql}" :
+            string query = deleteProps.Top != null ?
+                $"DELETE TOP({deleteProps.Top}) FROM {TableSql} {AliasSql}" :
                 $"DELETE FROM {TableSql} {AliasSql}";
 
             // Condition
-            if (!string.IsNullOrWhiteSpace(updateProps?.WhereSql as string)) {
-                query += " WHERE " + updateProps.WhereSql; 
+            if (!string.IsNullOrWhiteSpace(deleteProps?.WhereSql as string)) {
+                query += " WHERE " + deleteProps.WhereSql; 
             }
 
             // Delete by Condition
-            Execute(updateProps.PostEditSQL(query), updateProps?.WhereParams, batchId);
+            Execute(deleteProps.PostEditSQL(query), deleteProps?.WhereParams, batchId);
         }
 
         /// <summary>

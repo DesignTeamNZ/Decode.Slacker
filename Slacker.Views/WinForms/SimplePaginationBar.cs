@@ -20,11 +20,11 @@ namespace Slacker.Views.WinForms {
 
         public void SetPagination(IGridPagination pagination) {
             if (this.Pagination != null) {
-                this.Pagination.OnRecordSetLoaded -= Pagination_OnRecordSetLoaded;
+                this.Pagination.RecordSetLoaded -= Pagination_OnRecordSetLoaded;
             }
             this.Pagination = pagination;
 
-            Pagination.OnRecordSetLoaded += Pagination_OnRecordSetLoaded;
+            Pagination.RecordSetLoaded += Pagination_OnRecordSetLoaded;
             Pagination_OnRecordSetLoaded(this, null);
         } 
 

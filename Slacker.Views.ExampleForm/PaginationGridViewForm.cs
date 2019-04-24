@@ -26,12 +26,25 @@ namespace Slacker.Views.ExampleForm {
             
             // Set DataService
             var connectionManager = DataServiceConnectionManager.FromConfig("AdventureWorks2017");
-            Pagination.DataService = new PersonDataService(connectionManager);
+            Pagination.DataService = new PersonDataService(connectionManager) {
+                AllowDelete = true
+            };
+
+            // Events
+            this.Pagination.ModelEdited += Pagination_ModelEdited;
+            this.Pagination.ModelDeleted += Pagination_ModelDeleted;
 
             // Load Grid
             this.simplePaginationBar1.SetPagination(Pagination);
             this.paginationGridView1.LoadPagination(Pagination);
         }
 
+        private void Pagination_ModelDeleted(object sender, ModelDeletedEventArgs<Person> e) {
+            Pagination.DataService.Delete(e.Model);
+        }
+
+        private void Pagination_ModelEdited(object sender, ModelEditedEventArgs<Person> e) {
+            Pagination.DataService.Update(e.Model);
+        }
     }
 }

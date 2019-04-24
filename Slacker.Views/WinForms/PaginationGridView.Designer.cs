@@ -1,4 +1,7 @@
-﻿namespace Slacker.Views.WinForms {
+﻿using System;
+using System.Windows.Forms;
+
+namespace Slacker.Views.WinForms {
     partial class PaginationGridView {
         /// <summary> 
         /// Required designer variable.
@@ -23,34 +26,38 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.gridView = new System.Windows.Forms.DataGridView();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView)).BeginInit();
             this.SuspendLayout();
             // 
-            // dataGridView1
+            // gridView
             // 
-            this.dataGridView1.AllowUserToOrderColumns = true;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridView1.Location = new System.Drawing.Point(0, 0);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(557, 391);
-            this.dataGridView1.TabIndex = 1;
+            this.gridView.AllowUserToOrderColumns = true;
+            this.gridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gridView.Location = new System.Drawing.Point(0, 0);
+            this.gridView.Name = "gridView";
+            this.gridView.Size = new System.Drawing.Size(557, 391);
+            this.gridView.TabIndex = 1;
+            this.gridView.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.GridView_CellBeginEdit);
+            this.gridView.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.GridView_CellEndEdit);
+            this.gridView.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.GridView_RowsRemoved);
             // 
             // PaginationGridView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.gridView);
             this.Name = "PaginationGridView";
             this.Size = new System.Drawing.Size(557, 391);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridView)).EndInit();
             this.ResumeLayout(false);
 
         }
 
+
         #endregion
 
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.DataGridView gridView;
     }
 }

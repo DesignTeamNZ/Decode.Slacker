@@ -21,24 +21,41 @@ namespace Slacker.Views.WinForms {
 
         public void LoadPagination(IGridPagination pagination) {
             if (this.Pagination != null) {
-                this.Pagination.OnRecordSetLoaded -= Pagination_OnRecordSetLoaded;
+                this.Pagination.RecordSetLoaded -= Pagination_OnRecordSetLoaded;
             }
             this.Pagination = pagination;
 
             // Set Binding
-            dataGridView1.DataSource = GridBinding;
+            gridView.DataSource = GridBinding;
 
             // Load Pagination
-            pagination.OnRecordSetLoaded += Pagination_OnRecordSetLoaded;
+            pagination.RecordSetLoaded += Pagination_OnRecordSetLoaded;
             pagination.Load();
         }
 
         private void Pagination_OnRecordSetLoaded(object sender, EventArgs e) {
             GridBinding.Clear();
-
-            Pagination.RecordSet.ToList().ForEach(
+            Pagination?.RecordSet?.ToList().ForEach(
                 record => GridBinding.Add(record)
             );
+        }
+
+        private void GridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e) {
+            e.Cancel = Pagination?.RaisePreModelEditedEvent(
+                Pagination.RecordSet[e.RowIndex],
+                gridView.Columns[e.ColumnIndex].DataPropertyName
+            );
+        }
+
+        private void GridView_CellEndEdit(object sender, DataGridViewCellEventArgs e) {
+            Pagination?.RaiseModelEditedEvent(
+                Pagination.RecordSet[e.RowIndex],
+                gridView.Columns[e.ColumnIndex].DataPropertyName
+            );
+        }
+
+        private void GridView_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e) {
+            Pagination?.RaiseModelDeletedEvent(Pagination.RecordSet[e.RowIndex]);
         }
 
     }
