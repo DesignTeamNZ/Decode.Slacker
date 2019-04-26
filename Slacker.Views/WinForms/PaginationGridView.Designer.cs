@@ -41,6 +41,7 @@ namespace Slacker.Views.WinForms {
             this.gridView.TabIndex = 1;
             this.gridView.CellBeginEdit += new System.Windows.Forms.DataGridViewCellCancelEventHandler(this.GridView_CellBeginEdit);
             this.gridView.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.GridView_CellEndEdit);
+            this.gridView.ColumnAdded += new System.Windows.Forms.DataGridViewColumnEventHandler(this.GridView_ColumnAdded);
             this.gridView.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.GridView_RowsRemoved);
             // 
             // PaginationGridView

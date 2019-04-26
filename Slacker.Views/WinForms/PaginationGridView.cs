@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Slacker.Views.Grid;
+using Slacker.Views.Winforms.Controls;
 
 namespace Slacker.Views.WinForms {
     public partial class PaginationGridView : UserControl {
@@ -31,6 +32,8 @@ namespace Slacker.Views.WinForms {
             // Load Pagination
             pagination.RecordSetLoaded += Pagination_OnRecordSetLoaded;
             pagination.Load();
+
+            gridView.Columns.Add(new DateTimePickerColumn());
         }
 
         private void Pagination_OnRecordSetLoaded(object sender, EventArgs e) {
@@ -58,5 +61,11 @@ namespace Slacker.Views.WinForms {
             Pagination?.RaiseModelDeletedEvent(Pagination.RecordSet[e.RowIndex]);
         }
 
+        private void GridView_ColumnAdded(object sender, DataGridViewColumnEventArgs e) {
+            if (e.Column.CellType != typeof(DateTime)) {
+                return;
+            }
+            
+        }
     }
 }
