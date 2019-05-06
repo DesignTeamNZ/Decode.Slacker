@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Slacker.Helpers
-{
+namespace Slacker.Helpers {
     public class ServiceRegistry {
 
         protected Dictionary<Type, object> serviceRegistry 

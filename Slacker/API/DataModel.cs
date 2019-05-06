@@ -1,6 +1,4 @@
-﻿using PropertyChanged;
-using Slacker.Helpers.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -19,8 +17,6 @@ namespace Slacker {
         /// <summary>
         /// Keeps track of what properties were changed on Model
         /// </summary>
-        [DoNotNotify]
-        [Field(Ignored = true)]
         private IList<string> ChangedProperties { get; set; } = new List<string>();
 
 
@@ -28,8 +24,6 @@ namespace Slacker {
         /// <summary>
         /// Enables/Disables change tracking.
         /// </summary>
-        [DoNotNotify]
-        [Field(Ignored = true)]
         private bool ChangeTrackingDisabled {
             get {
                 return _changeTrackingDisabled;

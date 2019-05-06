@@ -1,52 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
-    <Version>1.1.0</Version>
-    <Authors>Cody Rees</Authors>
-    <Company>We Decode Limited</Company>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyName>Decode.Slacker</AssemblyName>
-    <FileVersion>1.1.0</FileVersion>
-    <AssemblyVersion>1.1.0</AssemblyVersion>
-    <Copyright>We Decode Limited - All Rights Reserved 2018</Copyright>
-    <RepositoryUrl>https://github.com/DesignTeamNZ/Decode.Slacker</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <Description>A lightweight EntityFramework replacement library build on Dapper with extensive modeling utilities.</Description>
-    <PackageProjectUrl>https://github.com/DesignTeamNZ/Decode.Slacker</PackageProjectUrl>
-    <PackageIconUrl>https://avatars2.githubusercontent.com/u/20100139</PackageIconUrl>
-    <Product>Slacker</Product>
-    <NeutralLanguage>en-NZ</NeutralLanguage>
-    <PackageId>Decode.Slacker</PackageId>
-    <PackageReleaseNotes>## 1.0.3.1
-- Added source to symbols build</PackageReleaseNotes>
-    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
+
   <ItemGroup>
-    <None Remove="FodyWeavers.xml" />
+    <Compile Remove="DataModelField.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <Content Include="FodyWeavers.xml">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      <Generator>IncludeInPackage</Generator>
-    </Content>
+    <None Include="DataModelField.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.50.5" />
+    <PackageReference Include="Dapper" Version="1.60.6" />
     <PackageReference Include="FastMember" Version="1.4.1" />
-    <PackageReference Include="Fody" Version="3.2.14">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="PropertyChanged.Fody" Version="2.5.13" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Configuration" />
-  </ItemGroup>
+
 </Project>

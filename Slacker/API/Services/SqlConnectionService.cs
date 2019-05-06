@@ -5,19 +5,15 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Reflection;
 
-namespace Slacker.Connection {
+namespace Slacker {
     /// <summary>
     /// DataService Connection Manager for managing multiple connections / batches / transactions 
     /// </summary>
-    public interface IDataServiceConnectionManager {
+    public interface ISqlConnectionService {
         /// <summary>
         /// Specifies the connection string used by this Connection Manager
         /// </summary>
         string ConnectionString { get; set; }
-        /// <summary>
-        /// Specifies the SqlCredentials to be used by the Connection Manager
-        /// </summary>
-        SqlCredential Credentials { get; set; }
 
         /// <summary>
         /// Marks the connection manager to treat all updates as part of the same batch / connection.
@@ -49,12 +45,10 @@ namespace Slacker.Connection {
     }
 
     /// <inheritdoc/>
-    public class DataServiceConnectionManager : IDataServiceConnectionManager {
+    public class SqlConnectionService : ISqlConnectionService {
 
         /// <inheritdoc />
         public string ConnectionString { get; set; }
-        /// <inheritdoc />
-        public SqlCredential Credentials { get; set; }
 
         /// <summary>
         /// Current state of Batch Connections: batchId -> connection
@@ -65,7 +59,7 @@ namespace Slacker.Connection {
         /// </summary>
         protected Dictionary<long, SqlTransaction> Transactions { get; set; }
 
-        protected DataServiceConnectionManager() {
+        protected SqlConnectionService() {
             this.BatchConnections = new Dictionary<long, SqlConnection>();
             this.Transactions = new Dictionary<long, SqlTransaction>();
         }
@@ -76,10 +70,7 @@ namespace Slacker.Connection {
                 throw new Exception("Batch is already running on this thread/batch id.");
             }
 
-            var connection = Credentials == null ?
-                new SqlConnection(ConnectionString) :
-                new SqlConnection(ConnectionString, Credentials
-            );
+            var connection = new SqlConnection(ConnectionString);
             connection.Open();
 
             BatchConnections.Add(threadOrBatchId, connection);
@@ -120,10 +111,7 @@ namespace Slacker.Connection {
 
             // If no batch is defined, build connection for query
             if (!this.BatchConnections.ContainsKey(threadOrBatchId)) {
-                var connection = Credentials == null ?
-                    new SqlConnection(ConnectionString) :
-                    new SqlConnection(ConnectionString, Credentials
-                );
+                var connection = new SqlConnection(ConnectionString);
 
                 using (connection) {
                     return connection.Query<T>(query, paramObject);
@@ -137,10 +125,7 @@ namespace Slacker.Connection {
         /// <inheritdoc />
         public void ExecuteUpdate(string update, object paramObject, long threadOrBatchId) {
             if (!this.BatchConnections.ContainsKey(threadOrBatchId)) {
-                var connection = Credentials == null ?
-                    new SqlConnection(ConnectionString) :
-                    new SqlConnection(ConnectionString, Credentials
-                );
+                var connection = new SqlConnection(ConnectionString);
 
                 using (connection) {
                     connection.Execute(update, paramObject);
@@ -155,29 +140,30 @@ namespace Slacker.Connection {
         }
 
         /// <inheritdoc />
-        public static DataServiceConnectionManager FromConfig(string key, Assembly configAssembly = null) {
-            if (configAssembly == null) {
-                configAssembly = Assembly.GetCallingAssembly();
-            }
-
-            var config = ConfigurationManager.OpenExeConfiguration(configAssembly.Location);
-            
-            var connStr = config?.ConnectionStrings?.ConnectionStrings[key]?.ConnectionString;
-            if(connStr == null) { 
-                throw new Exception(
-                    $"Could not find connection string '{key}' in assembly config '{configAssembly.GetName()}"
-                );
-            }
-
-            return FromConnectionString(connStr);
+        public static SqlConnectionService FromConnectionString(string connStr) {
+            return new SqlConnectionService() {
+                ConnectionString = connStr
+            };
         }
 
         /// <inheritdoc />
-        public static DataServiceConnectionManager FromConnectionString(string connStr) {
-            return new DataServiceConnectionManager() {
-                ConnectionString = connStr
-        };
-        }
+        //public static SqlConnectionService FromConfig(string key, Assembly configAssembly = null) {
+        //    if (configAssembly == null) {
+        //        configAssembly = Assembly.GetCallingAssembly();
+        //    }
+
+        //    var config = ConfigurationManager.OpenExeConfiguration(configAssembly.Location);
+
+        //    var connStr = config?.ConnectionStrings?.ConnectionStrings[key]?.ConnectionString;
+        //    if(connStr == null) { 
+        //        throw new Exception(
+        //            $"Could not find connection string '{key}' in assembly config '{configAssembly.GetName()}"
+        //        );
+        //    }
+
+        //    return FromConnectionString(connStr);
+        //}
+
     }
 
 }

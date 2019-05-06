@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Slacker.Helpers.Attributes{
+namespace Slacker {
 
     /// <summary>
     /// Attribute used on DatabModels to override default table name generation
@@ -11,7 +11,7 @@ namespace Slacker.Helpers.Attributes{
         public string Name { get; private set; }
         public string Alias { get; private set; }
         
-        public TableAttribute(string name, string alias = null) {
+        public TableAttribute(string name, string alias = null, params string[] primaryKeys) {
             this.Name = name;
             this.Alias = alias ?? name;
         }

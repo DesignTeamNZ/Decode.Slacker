@@ -5,15 +5,14 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using Slacker.Helpers;
-using Slacker.Helpers.Attributes;
 using System.Linq.Expressions;
 using System.Data;
 using System.Dynamic;
 using FastMember;
 using System.Threading.Tasks;
 using Slacker.Exceptions;
-using Slacker.Connection;
 using System.Threading;
+using Slacker.Interfaces;
 
 namespace Slacker {
 
@@ -409,7 +408,7 @@ namespace Slacker {
             get {
                 if (_queryFieldCols == null) {
                     _queryFieldCols = string.Join(",", Fields.Select(
-                            field => field.TableFieldSql
+                            field => field.FieldNameAsSql
                     ));
                 }
                 return _queryFieldCols;
@@ -425,7 +424,7 @@ namespace Slacker {
                 if (_queryNonKeyFieldCols == null) {
                     _queryNonKeyFieldCols = string.Join(",",
                         NonGeneratedFields.Select(
-                            field => field.TableFieldSql
+                            field => field.FieldNameAsSql
                         )
                     );
                 }
@@ -441,7 +440,7 @@ namespace Slacker {
             get {
                 if (_queryModelRefs == null) {
                     _queryModelRefs = string.Join(",", Fields.Select(
-                        field => $"@{field.ModelField}"
+                        field => $"@{field.BindingPropName}"
                     ));
                 }
                 return _queryModelRefs;
@@ -457,7 +456,7 @@ namespace Slacker {
                 if (_queryNonKeyModelRefs == null) {
                     _queryNonKeyModelRefs = string.Join(",",
                         NonGeneratedFields.Select(
-                            field => $"@{field.ModelField}"
+                            field => $"@{field.BindingPropName}"
                         )
                     );
                 }
@@ -475,7 +474,7 @@ namespace Slacker {
                 if (_querySelects == null) {
                     _querySelects = string.Join(",",
                         Fields.Select(
-                            field => $"{AliasSql}.{field.TableFieldSql} AS [{field.ModelField}]"
+                            field => $"{AliasSql}.{field.FieldNameAsSql} AS [{field.BindingPropName}]"
                         )
                     );
                 }
@@ -492,7 +491,7 @@ namespace Slacker {
                 if (_queryDefaultUpdateRefs == null) {
                     _queryDefaultUpdateRefs = string.Join(",",
                         NonGeneratedFields.Select(
-                            field => $@"{AliasSql}.{field.TableFieldSql} = @{field.ModelField}"
+                            field => $@"{AliasSql}.{field.FieldNameAsSql} = @{field.BindingPropName}"
                         )
                     );
                 }
@@ -570,37 +569,37 @@ namespace Slacker {
             get {
                 if (_defaultCondition == null) {
                     _defaultCondition = string.Join(" AND ", PrimaryKey.Select(
-                        field => $@"({AliasSql}.{field.TableFieldSql} = @{field.ModelField})"
+                        field => $@"({AliasSql}.{field.FieldNameAsSql} = @{field.BindingPropName})"
                     ));
                 }
                 return _defaultCondition;
             }
         }
 
-        private List<DataModelField> _primaryKey;
+        private List<IDataFieldDefinition> _primaryKey;
         /// <summary>
         /// Return Primary Key Fields 
         /// </summary>
-        public List<DataModelField> PrimaryKey {
+        public List<IDataFieldDefinition> PrimaryKey {
             get {
                 if (_primaryKey == null) {
                     _primaryKey = Fields.Where(
-                        field => field.IsPrimary
+                        field => field.KeyType == KeyType.PRIMARY_KEY
                     ).ToList();
                 }
                 return _primaryKey;
             }
         }
 
-        private List<DataModelField> _nonGeneratedFields;
+        private List<IDataFieldDefinition> _nonGeneratedFields;
         /// <summary>
         /// Return NonKey Fields
         /// </summary>
-        public List<DataModelField> NonGeneratedFields {
+        public List<IDataFieldDefinition> NonGeneratedFields {
             get {
                 if (_nonGeneratedFields == null) {
                     _nonGeneratedFields = Fields.Where(
-                        field => !field.IsGenerated
+                        field => field.KeyType > KeyType.NONE
                     ).ToList();
                 }
                 return _nonGeneratedFields;
@@ -627,31 +626,71 @@ namespace Slacker {
         /// <summary>
         /// The SQLConnection for this DataService
         /// </summary>
-        public IDataServiceConnectionManager ConnectionManager { get; set; }
+        public ISqlConnectionService ConnectionManager { get; set; }
 
         /// <summary>
         /// Contains DataField info
         /// </summary>
-        public List<DataModelField> Fields { get; protected set; }
+        public List<IDataFieldDefinition> Fields { get; protected set; }
         
         /// <summary>
         /// Initializes a new DataService with a given connection
         /// </summary>
         /// <param name="connectionManager">Connection manager</param>
-        public DataService(DataServiceConnectionManager connectionManager = null) {
+        public DataService(SqlConnectionService connectionManager = null) {
             this.ConnectionManager = connectionManager;
 
             // Register Fields/Properties
             // Potential TODO: Replace with FastMember
-            var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
-            this.Fields = typeof(T).GetProperties(bindingFlags).Select(
-                memberInfo => new DataModelField(memberInfo)
-            ).Where(
-                dataField => !dataField.IsIgnored
-            ).ToList();
+            this.Fields = GetModelDataFieldDefinition().ToList();
             
             // Add DataService as managing service for model (T)
             SERVICE_REGISTRY.Register(typeof(T), this);
+        }
+
+        public virtual IEnumerable<IDataFieldDefinition> GetModelDataFieldDefinition() {
+            var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
+
+            // Maps MemberInfo to IDataFieldDefinition
+            // returns Null if not found
+            IDataFieldDefinition getDataFieldDefinition(MemberInfo member) {
+
+                // Get underlaying prop/field type
+                var memberType = (Type)null;
+                if (member.MemberType == MemberTypes.Property) {
+                    memberType = ((PropertyInfo)member).PropertyType;
+
+                } else if (member.MemberType == MemberTypes.Field) {
+                    memberType = ((FieldInfo)member).FieldType;
+
+                } else {
+                    // Not Field or Property return null
+                    return null;
+                }
+
+                // If SlackerIgnoreAttribute or defined at DataModel level
+                if (memberType.GetCustomAttribute<SlackerIgnoreAttribute>() == null ||
+                    memberType.DeclaringType == typeof(DataModel)) {
+                    return null;
+                }
+                // Get DataFieldDefinition from FieldAttribute
+                var dataFieldDefinition = memberType.GetCustomAttribute<FieldAttribute>();
+                if (dataFieldDefinition != null) {
+                    dataFieldDefinition.BindingPropName = member.Name;
+                    return dataFieldDefinition;
+                }
+
+                // Not found, use Generic Data Field Definition
+                return new GenericDataFieldDefinition() {
+                    BindingPropName = member.Name
+                };
+            }
+
+            return typeof(T).GetMembers(bindingFlags).Select(
+                getDataFieldDefinition
+            ).Where(
+                fieldDefinition => fieldDefinition != null    
+            );
         }
 
         [Obsolete]
@@ -661,7 +700,7 @@ namespace Slacker {
         /// <param name="connectionManager">The SqlConnection</param>
         public DataService(SqlConnection conn = null) 
             : this(conn == null ? null : 
-                  DataServiceConnectionManager.FromConnectionString(conn.ConnectionString)
+                  SqlConnectionService.FromConnectionString(conn.ConnectionString)
             ) {
         }
         
@@ -678,7 +717,7 @@ namespace Slacker {
             }
 
             var autoIncField = PrimaryKey.FirstOrDefault(
-                pk => pk.FieldAttribute.IsGenerated
+                pk => pk.KeyType == KeyType.PRIMARY_KEY
             );
 
             // Do Insert
@@ -697,7 +736,7 @@ namespace Slacker {
                 );
 
 
-                TypeAccessor[model, autoIncField.ModelField] = results.Single();
+                TypeAccessor[model, autoIncField.BindingPropName] = results.Single();
                 model.ClearChangedPropertiesList();
             }
         }
@@ -771,7 +810,7 @@ namespace Slacker {
         public override int Count(QueryProps queryProps, long batchId = -1) {
             // Build Query
             var query = _countQuery ?? (
-                _countQuery = $@"SELECT COUNT({Fields.First().TableFieldSql}) AS Count FROM {TableSql} {AliasSql}"
+                _countQuery = $@"SELECT COUNT({Fields.First().FieldNameAsSql}) AS Count FROM {TableSql} {AliasSql}"
             );
             // Where
             if (!string.IsNullOrWhiteSpace(queryProps?.WhereSql)) {
@@ -813,7 +852,7 @@ namespace Slacker {
 
             // If fields is null, use all NonKeyFields else map Fields by tableFieldsToUpdate
             var updateFieldsInfo = updateFields == null ? NonGeneratedFields : Fields.Where(
-                field => updateFields.Contains(field.TableField)
+                field => updateFields.Contains(field.BindingPropName)
             );
 
             // Blank update set, return
@@ -822,7 +861,7 @@ namespace Slacker {
             }
 
             var updateFieldStr = string.Join(", ", (updateFieldsInfo.Select(
-                field => $"{AliasSql}.{field.TableFieldSql}=@{field.ModelField}"
+                field => $"{AliasSql}.{field.FieldNameAsSql}=@{field.BindingPropName}"
             )));
 
             // Do Update
@@ -952,5 +991,14 @@ namespace Slacker {
 
     }
 
+
+    /// <summary>
+    /// A generic dataservice for models that don't need an extensible dataservice
+    /// </summary>
+    public class GenericDataService<T> : DataService<T> where T : DataModel, new() {
+        public GenericDataService(SqlConnectionService connectionManager = null)
+            : base(connectionManager) {
+        }
+    }
 
 }

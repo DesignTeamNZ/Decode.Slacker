@@ -1,5 +1,4 @@
-﻿using Slacker.Connection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -15,7 +14,7 @@ namespace Slacker {
         /// <summary>
         /// Initalize all dataservices that where the 'getManager' predicate does not return null
         /// </summary>
-        public static void InitializeDataServices(Func<Type, DataServiceConnectionManager> getManager) {
+        public static void InitializeDataServices(Func<Type, SqlConnectionService> getManager) {
             foreach (var type in GetAllDataServices()) {
                 var manager = getManager?.Invoke(type);
                 if (manager == null) continue;
@@ -24,14 +23,14 @@ namespace Slacker {
                     constr => {
                         var prams = constr.GetParameters();
                         return prams.Count() == 1
-                            && prams[0].ParameterType.IsAssignableFrom(typeof(DataServiceConnectionManager));
+                            && prams[0].ParameterType.IsAssignableFrom(typeof(SqlConnectionService));
                     }
                 );
 
                 if (constructor == null) {
                     throw new Exception($"Could not initialize DS '{type.Name}'. " +
                         $"DataSource requires a constructor that takes " +
-                        $"only '{ typeof(DataServiceConnectionManager) }' argument.");
+                        $"only '{ typeof(SqlConnectionService) }' argument.");
                 }
 
                 constructor.Invoke(new object[] { manager });
