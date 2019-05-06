@@ -546,8 +546,8 @@ namespace Slacker {
         public string Alias {
             get {
                 if (_alias == null) {
-                    _alias = TableAttribute?.Alias ?? 
-                        typeof(T).Name.PadRight(3, '0').Substring(3);
+                    _alias = TableAttribute?.Alias ??
+                        typeof(T).Name.PadRight(3, '0').Substring(0, 4);
                 }
                 return _alias;
             }
@@ -658,25 +658,29 @@ namespace Slacker {
                 // Get underlaying prop/field type
                 var memberType = (Type)null;
                 if (member.MemberType == MemberTypes.Property) {
-                    memberType = ((PropertyInfo)member).PropertyType;
+                    // Member is a Property, Return Type
+                    var prop = (PropertyInfo) member;
+                    memberType = prop.PropertyType;
 
                 } else if (member.MemberType == MemberTypes.Field) {
-                    memberType = ((FieldInfo)member).FieldType;
-
+                    // Member is a Field, Return Type
+                    var field = (FieldInfo) member;
+                    memberType = field.FieldType;
                 } else {
                     // Not Field or Property return null
                     return null;
                 }
 
-                // If SlackerIgnoreAttribute or defined at DataModel level
-                if (memberType.GetCustomAttribute<SlackerIgnoreAttribute>() == null ||
-                    memberType.DeclaringType == typeof(DataModel)) {
+                // If SlackerIgnoreAttribute is defined 
+                // Or if properties/fields are defined on the DataModel type
+                if (member.GetCustomAttribute<SlackerIgnoreAttribute>() != null ||
+                    member.ReflectedType == typeof(DataModel)) {
                     return null;
                 }
                 // Get DataFieldDefinition from FieldAttribute
-                var dataFieldDefinition = memberType.GetCustomAttribute<FieldAttribute>();
+                var dataFieldDefinition = member.GetCustomAttribute<FieldAttribute>();
                 if (dataFieldDefinition != null) {
-                    dataFieldDefinition.BindingPropName = member.Name;
+                    dataFieldDefinition.BindingPropName = memberType.Name;
                     return dataFieldDefinition;
                 }
 
