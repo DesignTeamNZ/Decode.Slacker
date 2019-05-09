@@ -1,9 +1,10 @@
-﻿using Slacker.AdventureWorks2017.Person;
-using Slacker.Connection;
+﻿using AdventureWorks2017.Person;
+using Slacker.Helpers;
 using Slacker.Views.Grid;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -23,10 +24,11 @@ namespace Slacker.Views.ExampleForm {
             this.Pagination = DataServiceGridPagination<Person>.Create(true, 500);
             this.Pagination.QueryCondition = "FirstName = @FirstName";
             this.Pagination.QueryConditionParams = new { FirstName = "Kevin" };
-            
+
             // Set DataService
-            var connectionManager = DataServiceConnectionManager.FromConfig("AdventureWorks2017");
-            Pagination.DataService = new PersonDataService(connectionManager) {
+            var config = ConfigurationManager.ConnectionStrings["AdventureWorks2017"];
+            var connectionManager = SqlConnectionService.FromConnectionString(config.ConnectionString);
+            Pagination.DataService = new GenericDataService<Person>(connectionManager) {
                 AllowDelete = true
             };
 

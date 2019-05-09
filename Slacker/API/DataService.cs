@@ -680,7 +680,7 @@ namespace Slacker {
                 // Get DataFieldDefinition from FieldAttribute
                 var dataFieldDefinition = member.GetCustomAttribute<FieldAttribute>();
                 if (dataFieldDefinition != null) {
-                    dataFieldDefinition.BindingPropName = memberType.Name;
+                    dataFieldDefinition.BindingPropName = member.Name;
                     return dataFieldDefinition;
                 }
 

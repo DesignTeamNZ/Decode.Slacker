@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <PackageId>Decode.Slacker</PackageId>
+    <Version>1.2.0</Version>
+    <Authors>Cody Rees</Authors>
+    <Company>Decode</Company>
+    <Product>Decode.Slacker</Product>
   </PropertyGroup>
 
   <ItemGroup>
