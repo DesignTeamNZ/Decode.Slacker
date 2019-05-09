@@ -1,0 +1,15 @@
+﻿<Window x:Class="Slacker.Views.ExampleWpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Slacker.Views.ExampleWpf"
+        xmlns:views="clr-namespace:Slacker.Views.Controls.Wpf;assembly=Slacker.Views"
+        xmlns:controls="clr-namespace:Slacker.Views.ExampleWpf.Controls"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+
+    <controls:PersonServiceGrid x:Name="DataGrid"/>
+    
+    
+</Window>
