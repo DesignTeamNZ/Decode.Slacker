@@ -10,7 +10,7 @@ namespace Slacker.AutoModeller.Models {
     public partial class InformationSchemaColumn : DataModel {
 
         [Field("TABLE_CATALOG", FieldType.NVARCHAR, 128)]
-        public string TableCatelog { get; set; }
+        public string TableCatalog { get; set; }
 
         [Field("TABLE_SCHEMA", FieldType.NVARCHAR, 128)]
         public string TableSchema { get; set; }
@@ -19,7 +19,7 @@ namespace Slacker.AutoModeller.Models {
         public string TableName { get; set; }
 
         [Field("COLUMN_NAME", FieldType.NVARCHAR, 4000)]
-        public string ColumnDefault { get; set; }
+        public string ColumnName { get; set; }
 
         [Field("IS_NULLABLE", FieldType.VARCHAR, 3)]
         public string IsNullableText { get; set; }

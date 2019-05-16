@@ -18,7 +18,7 @@ namespace Slacker.AutoModeller.Templates
     /// Class to produce the template output
     /// </summary>
     
-    #line 1 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+    #line 1 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TextTemplating", "15.0.0.0")]
     public partial class DataModelTemplate : DataModelTemplateBase
     {
@@ -29,50 +29,84 @@ namespace Slacker.AutoModeller.Templates
         public virtual string TransformText()
         {
             this.Write("\r\nusing System;\r\nusing System.Collections.Generic;\r\nusing System.Linq;\r\nusing Sys" +
-                    "tem.Text;\r\nusing System.Threading.Tasks;\r\n\r\nnamespace ");
+                    "tem.Text;\r\nusing System.Threading.Tasks;\r\nusing Slacker;\r\n\r\nnamespace ");
             
-            #line 13 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            #line 14 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Namespace));
             
             #line default
             #line hidden
             this.Write("  {\r\n\r\n    [Table(\"");
             
-            #line 15 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            #line 16 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(TableName));
             
             #line default
             #line hidden
             this.Write("\", \"");
             
-            #line 15 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            #line 16 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(Alias));
             
             #line default
             #line hidden
             this.Write("\")]\r\n    public class ");
             
-            #line 16 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ClassName));
+            #line 17 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(GetPropertyName(TableName)));
             
             #line default
             #line hidden
-            this.Write(" : DataModel {\r\n\r\n\t\r\n");
+            this.Write(" : DataModel {\r\n\t#region Instance Properties\r\n\t");
             
-            #line 19 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
-  foreach(var memberInfo in ClassAttribute.SerializableMembers) { 
-            
-            #line default
-            #line hidden
-            this.Write("\r\n        [Field(\"TABLE_CATALOG\", FieldType.NVARCHAR, 128)]\r\n        public strin" +
-                    "g TableCatelog { get; set; }\r\n");
-            
-            #line 23 "E:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
-  } 
+            #line 19 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+  foreach(var infoSchema in InfoSchema) { 
             
             #line default
             #line hidden
-            this.Write("\r\n\r\n    }\r\n}\r\n");
+            this.Write("\t\t");
+            
+            #line 20 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+ var fieldType = GetFieldType(infoSchema.DataType); 
+            
+            #line default
+            #line hidden
+            this.Write("\t\t\r\n\t\t[Field(\"");
+            
+            #line 22 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(infoSchema.ColumnName));
+            
+            #line default
+            #line hidden
+            this.Write("\", FieldType.");
+            
+            #line 22 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(fieldType.ToString()));
+            
+            #line default
+            #line hidden
+            this.Write(")]\r\n\t\tpublic ");
+            
+            #line 23 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(GetTypeAsSourceDefinition(fieldType.GetCodeEquivalentType(infoSchema.IsNullable))));
+            
+            #line default
+            #line hidden
+            this.Write(" ");
+            
+            #line 23 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture((infoSchema.TableName == infoSchema.ColumnName ? "_" : "") + GetPropertyName(infoSchema.ColumnName)));
+            
+            #line default
+            #line hidden
+            this.Write(" { get; set; }\r\n\t");
+            
+            #line 24 "C:\_Decode\Repos\Decode.Slacker\Slacker.AutoModeller\Templates\DataModelTemplate.tt"
+ } 
+            
+            #line default
+            #line hidden
+            this.Write("\r\n\t#endregion Instance Properties\r\n\r\n    }\r\n}\r\n");
             return this.GenerationEnvironment.ToString();
         }
     }

@@ -101,18 +101,18 @@ namespace Slacker {
     public enum FieldType {
         NOT_SPECIFIED = 0,
         // Exact numerics
-        BIG_INT,   
-        NUMERIC, 
-        BIT,
-        SMALL_INT, 
-        DECIMAL,   
-        SMALL_MONEY, 
-        INT,
-        TINY_INT,
-        MONEY,
+        BIG_INT = 1,   
+        NUMERIC = 2, 
+        BIT = 3,
+        SMALL_INT = 4, 
+        DECIMAL = 5,   
+        SMALL_MONEY = 6, 
+        INT = 7,
+        TINY_INT = 8,
+        MONEY = 9,
         // Approximate numerics
-        FLOAT,
-        REAL,
+        FLOAT = 50,
+        REAL = 51,
         // Date and time
         DATE = 10,
         DATETIMEOFFSET = 11,
@@ -135,13 +135,13 @@ namespace Slacker {
         CURSOR = 40,
         ROW_VERSION = 41,
         HIERARCHY_ID = 42,
-        UNIQUE_IDENTIFIER = 44,
-        SQL_VARIANT = 45,
-        XML = 46,
-        GEOGRAPHY = 47,
-        TABLE = 48,
-        JSON = 49
-
+        UNIQUE_IDENTIFIER = 43,
+        SQL_VARIANT = 44,
+        XML = 45,
+        GEOGRAPHY = 46,
+        TABLE = 47,
+        JSON = 48
+        
     }
 
     public static class FieldTypeExtensions {
@@ -187,8 +187,8 @@ namespace Slacker {
             { FieldType.XML,        typeof(string) },
             { FieldType.GEOGRAPHY,  typeof(string) },
             { FieldType.TABLE,      typeof(string) },
-            { FieldType.JSON,       typeof(string) },
-            
+            { FieldType.JSON,       typeof(string) }
+
         };
 
         public static Type GetCodeEquivalentType(this FieldType type, bool nullable = false) {
@@ -196,7 +196,19 @@ namespace Slacker {
                 return typeof(string);
             }
 
-            return nullable ? GetNullableType(mappedType) : mappedType;
+            if (GetDefault(mappedType) != null) {
+                var nullType = nullable ? GetNullableType(mappedType) : mappedType;
+                return nullType;
+            }
+
+            return mappedType;
+        }
+
+        static object GetDefault(Type type) {
+            if (type.IsValueType) {
+                return Activator.CreateInstance(type);
+            }
+            return null;
         }
 
         static Type GetNullableType(Type type) {
