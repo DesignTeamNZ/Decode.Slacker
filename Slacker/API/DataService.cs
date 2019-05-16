@@ -650,6 +650,10 @@ namespace Slacker {
         public GenericDataService(SqlConnectionService connectionManager = null)
             : base(connectionManager) {
         }
+
+        public GenericDataService(string connStr = null) 
+            : base(SqlConnectionService.FromConnectionString(connStr)) {
+        }
     }
 
 }

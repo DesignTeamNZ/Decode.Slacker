@@ -73,12 +73,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Slacker\Slacker.csproj">
-      <Project>{7ae16172-ff7d-4cdf-b16d-5a0faf10d61c}</Project>
-      <Name>Slacker</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +80,12 @@
       <Generator>TextTemplatingFilePreprocessor</Generator>
       <LastGenOutput>DataModelTemplate.cs</LastGenOutput>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Slacker\Slacker.csproj">
+      <Project>{7ae16172-ff7d-4cdf-b16d-5a0faf10d61c}</Project>
+      <Name>Slacker</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
