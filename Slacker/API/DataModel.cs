@@ -7,10 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Slacker {
-
-    public interface IDataModel : INotifyPropertyChanged {
-        void OnPropertyChanged(string propertyName, object before, object after);
-    }
     
     public class DataModel : IDataModel {
         
@@ -39,8 +35,6 @@ namespace Slacker {
         /// Raises a Property Changed event
         /// </summary>
         public void OnPropertyChanged(string propertyName, object before, object after) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
             if (propertyName == null || ChangeTrackingDisabled ) {
                 return;
             }
@@ -50,6 +44,7 @@ namespace Slacker {
                 ChangedProperties.Add(propertyName);
             }
 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         /// <summary>
@@ -57,6 +52,13 @@ namespace Slacker {
         /// </summary>
         public bool IsChangeTrackingDisabledStatus() {
             return ChangeTrackingDisabled;
+        }
+
+        /// <summary>
+        /// Raise property changed event
+        /// </summary>
+        protected void RaisePropertyChanged(object sender, PropertyChangedEventArgs e) {
+            this.PropertyChanged?.Invoke(sender, e);
         }
 
         /// <summary>
