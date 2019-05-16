@@ -17,10 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="DataModelField.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Dapper" Version="1.50.5" />
     <PackageReference Include="FastMember" Version="1.4.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
