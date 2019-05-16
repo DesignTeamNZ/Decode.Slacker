@@ -1,5 +1,4 @@
-﻿using Slacker.Helpers.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,6 +9,7 @@ namespace Slacker {
     public class DataModelField {
         
         public string TableField { get; protected set; }
+        public string TableFieldSql { get => $"[{TableField.Replace(".", "].[")}]";}
         public string ModelField { get; protected set; }
 
         public Type ModelFieldType { get; protected set; }
