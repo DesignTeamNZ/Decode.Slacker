@@ -78,7 +78,7 @@ namespace Slacker {
         /// <inheritdoc />
         public void Update(T model, bool updateOnlyChangedProperties = true, long batchId = -1) {
             if (updateOnlyChangedProperties) {
-                var changedProperties = model.GetChangedPropertiesList();
+                var changedProperties = model.ChangedProperties;
                 if (changedProperties.Count < 1) {
                     return;
                 }

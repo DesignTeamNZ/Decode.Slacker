@@ -548,7 +548,7 @@ namespace Slacker {
             
             string query = deleteProps.Top != null ?
                 $"DELETE TOP({deleteProps.Top}) FROM {TableSql} {AliasSql}" :
-                $"DELETE FROM {TableSql} {AliasSql}";
+                $"DELETE {AliasSql} FROM {TableSql} {AliasSql}";
 
             // Condition
             if (!string.IsNullOrWhiteSpace(deleteProps?.WhereSql as string)) {
