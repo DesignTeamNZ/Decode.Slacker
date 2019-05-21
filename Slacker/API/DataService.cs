@@ -307,6 +307,12 @@ namespace Slacker {
                 if (member.MemberType == MemberTypes.Property) {
                     // Member is a Property, Return Type
                     var prop = (PropertyInfo) member;
+                    
+                    if (prop.SetMethod == null) {
+                        // No set method, this is likely a property mapping
+                        return null;
+                    }
+
                     memberType = prop.PropertyType;
 
                 } else if (member.MemberType == MemberTypes.Field) {
@@ -318,10 +324,11 @@ namespace Slacker {
                     return null;
                 }
 
-                // If SlackerIgnoreAttribute is defined 
+                // If SlackerIgnoreAttribute is defined, or declaring type is DataModel or SlackerIgnored
                 // Or if properties/fields are defined on the DataModel type
                 if (member.GetCustomAttribute<SlackerIgnoreAttribute>() != null ||
-                    member.ReflectedType == typeof(DataModel)) {
+                    member.DeclaringType.GetCustomAttribute<SlackerIgnoreAttribute>() != null ||
+                    member.DeclaringType == typeof(DataModel)) {
                     return null;
                 }
                 // Get DataFieldDefinition from FieldAttribute
