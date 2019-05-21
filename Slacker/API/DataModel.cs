@@ -9,7 +9,12 @@ using System.Threading.Tasks;
 namespace Slacker {
     
     public class DataModel : IDataModel {
-        
+
+        /// <summary>
+        /// Occurs when a property value changes.
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
+
         /// <summary>
         /// Keeps track of what properties were changed on Model
         /// </summary>
@@ -30,17 +35,24 @@ namespace Slacker {
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public virtual bool SetValue<T>(ref T field, T value, [CallerMemberName] string propertyName = "") {
+            if (object.Equals(field, value)) {
+                return false;
+            }
+
+            var oldValue = field;
+            field = value;
+            OnPropertyChanged(propertyName, oldValue, value);
+            return true;
+        }
+
         /// <summary>
         /// Raises a Property Changed event
         /// </summary>
-        public void OnPropertyChanged(string propertyName, object before, object after) {
-            if (propertyName == null || ChangeTrackingDisabled ) {
-                return;
-            }
+        protected virtual void OnPropertyChanged(string propertyName, object before, object after) {
 
             // Register Property Changed
-            if (!ChangedProperties.Contains(propertyName) && before != after) {
+            if (!ChangedProperties.Contains(propertyName) && propertyName != "" && before != after) {
                 ChangedProperties.Add(propertyName);
             }
 
