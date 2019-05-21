@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Slacker {
     
+    // TODO: Build lightweight version
     public class DataModel : IDataModel {
 
         /// <summary>
@@ -16,9 +18,20 @@ namespace Slacker {
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <summary>
-        /// Keeps track of what properties were changed on Model
+        /// Keeps track of what properties were changed on Model, Raises 
+        /// PropertyChanged when dataset is updated
         /// </summary>
-        private IList<string> ChangedProperties { get; set; } = new List<string>();
+        public ObservableCollection<string> ChangedProperties { get; }
+        
+        public DataModel() {
+            this.ChangedProperties = new ObservableCollection<string>();
+            this.ChangedProperties.CollectionChanged += (s, a) => {
+                RaisePropertyChanged(s, new PropertyChangedEventArgs(
+                    nameof(ChangedProperties)
+                ));
+            };
+
+        }
 
 
         private bool _changeTrackingDisabled;
@@ -79,14 +92,7 @@ namespace Slacker {
         public void SetChangeTrackingDisabledStatus(bool disabled) {
             this.ChangeTrackingDisabled = disabled;
         }
-
-        /// <summary>
-        /// Keeps track of what properties were changed on Model
-        /// </summary>
-        public IList<string> GetChangedPropertiesList() {
-            return this.ChangedProperties;
-        }
-
+        
         /// <summary>
         /// Clears current changed properties list
         /// </summary>
