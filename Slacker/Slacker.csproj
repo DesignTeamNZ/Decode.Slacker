@@ -2,13 +2,32 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyVersion>1.2.0.1</AssemblyVersion>
+    <AssemblyVersion>1.1.0-pre1.1</AssemblyVersion>
     <PackageId>Decode.Slacker</PackageId>
-    <Version>1.2.0.1</Version>
+    <Version>1.1.0-pre1.1</Version>
     <Authors>Cody Rees</Authors>
     <Company>Decode</Company>
     <Product>Decode.Slacker</Product>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReleaseNotes># Decode.Slacker-1.1.0-pre1.0
+- bugfix: Non-task based CRUD (DataService) functions no longer lock the current thread
+- changed: Various internal changes, optimisations and bugfixes 
+- added: SqlConnectionService for better connection management
+- added: Added Batch/RollBack/Commit (general transaction) support for DataServices 
+- added: Top, OrderBy, Offset and Limit support for queries (QueryProps)
+- added: Top support for delete statements (Delete Props)
+- added: Optional PostEditSQL hook
+- added: DependsOn attribute to auto-raise property notifications (ViewModel support)
+
+____
+# Decode.Slacker-1.0.0
+- Release</PackageReleaseNotes>
+    <Description>A lightweight ORM (Like EntityFramework) built on Dapper</Description>
+    <Copyright>Copyright © Decode (NZ) 2019</Copyright>
+    <PackageProjectUrl>https://github.com/DesignTeamNZ/Decode.Slacker</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <PackageIconUrl>https://avatars2.githubusercontent.com/u/20100139</PackageIconUrl>
+    <FileVersion>1.1.0-pre1.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
