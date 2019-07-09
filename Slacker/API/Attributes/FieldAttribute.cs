@@ -88,8 +88,10 @@ namespace Slacker {
         public KeyType KeyType { get; protected set; }
     }
 
-
-    [System.AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+    /// <summary>
+    /// Notifies that the target member/(members of class) aren't data fields
+    /// </summary>
+    [System.AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class)]
     public class SlackerIgnoreAttribute : System.Attribute { }
 
     public enum KeyType {

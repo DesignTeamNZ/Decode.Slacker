@@ -155,7 +155,10 @@ namespace Slacker.Views.Grid {
 
             var queryProps = new QueryProps {
                 WhereSql = QueryCondition,
-                WhereParams = QueryConditionParams
+                WhereParams = QueryConditionParams,
+                PostEditSQL = sql => {
+                    return sql;
+                }
             };
 
             // Build Master Record Set

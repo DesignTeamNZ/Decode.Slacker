@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -7,17 +8,30 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Slacker {
-
-    public interface IDataModel : INotifyPropertyChanged {
-        void OnPropertyChanged(string propertyName, object before, object after);
-    }
     
+    // TODO: Build lightweight version
     public class DataModel : IDataModel {
-        
+
         /// <summary>
-        /// Keeps track of what properties were changed on Model
+        /// Occurs when a property value changes.
         /// </summary>
-        private IList<string> ChangedProperties { get; set; } = new List<string>();
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Keeps track of what properties were changed on Model, Raises 
+        /// PropertyChanged when dataset is updated
+        /// </summary>
+        public ObservableCollection<string> ChangedProperties { get; }
+        
+        public DataModel() {
+            this.ChangedProperties = new ObservableCollection<string>();
+            this.ChangedProperties.CollectionChanged += (s, a) => {
+                RaisePropertyChanged(s, new PropertyChangedEventArgs(
+                    nameof(ChangedProperties)
+                ));
+            };
+
+        }
 
 
         private bool _changeTrackingDisabled;
@@ -34,22 +48,28 @@ namespace Slacker {
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public virtual bool SetValue<T>(ref T field, T value, [CallerMemberName] string propertyName = "") {
+            if (object.Equals(field, value)) {
+                return false;
+            }
+
+            var oldValue = field;
+            field = value;
+            OnPropertyChanged(propertyName, oldValue, value);
+            return true;
+        }
+
         /// <summary>
         /// Raises a Property Changed event
         /// </summary>
-        public void OnPropertyChanged(string propertyName, object before, object after) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
-            if (propertyName == null || ChangeTrackingDisabled ) {
-                return;
-            }
+        protected virtual void OnPropertyChanged(string propertyName, object before, object after) {
 
             // Register Property Changed
-            if (!ChangedProperties.Contains(propertyName) && before != after) {
+            if (!ChangedProperties.Contains(propertyName) && propertyName != "" && before != after) {
                 ChangedProperties.Add(propertyName);
             }
 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         /// <summary>
@@ -60,19 +80,19 @@ namespace Slacker {
         }
 
         /// <summary>
+        /// Raise property changed event
+        /// </summary>
+        protected void RaisePropertyChanged(object sender, PropertyChangedEventArgs e) {
+            this.PropertyChanged?.Invoke(sender, e);
+        }
+
+        /// <summary>
         /// Sets the Change Tracking Disabled status for this model
         /// </summary>
         public void SetChangeTrackingDisabledStatus(bool disabled) {
             this.ChangeTrackingDisabled = disabled;
         }
-
-        /// <summary>
-        /// Keeps track of what properties were changed on Model
-        /// </summary>
-        public IList<string> GetChangedPropertiesList() {
-            return this.ChangedProperties;
-        }
-
+        
         /// <summary>
         /// Clears current changed properties list
         /// </summary>
