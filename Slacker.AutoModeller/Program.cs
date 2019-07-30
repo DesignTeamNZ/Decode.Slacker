@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Slacker.AutoModeller {
     public class Program {
 
-        static string EXPORT_SYNTAX = "sam export <connectionStringConfigId> <catalog> <outputDir>";
+        static readonly string EXPORT_SYNTAX = "sam export <connectionStringConfigId> <catalog> <outputDir>";
 
         static void Main(string[] args) {
             Console.WriteLine(ConsoleHelpers.GetSlackerHeaderText());

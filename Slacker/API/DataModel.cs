@@ -82,7 +82,7 @@ namespace Slacker {
         /// <summary>
         /// Raise property changed event
         /// </summary>
-        protected void RaisePropertyChanged(object sender, PropertyChangedEventArgs e) {
+        protected virtual void RaisePropertyChanged(object sender, PropertyChangedEventArgs e) {
             this.PropertyChanged?.Invoke(sender, e);
         }
 

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Slacker.Exceptions;
 using System.Threading;
 using Slacker.Interfaces;
+using Slacker.API.Attributes;
 
 namespace Slacker {
 

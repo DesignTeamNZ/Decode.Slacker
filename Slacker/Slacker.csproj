@@ -2,14 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyVersion>1.1.0-pre1.1</AssemblyVersion>
+    <AssemblyVersion>1.1.0.6</AssemblyVersion>
     <PackageId>Decode.Slacker</PackageId>
-    <Version>1.1.0-pre1.1</Version>
+    <Version>1.1.0-pre2.0</Version>
     <Authors>Cody Rees</Authors>
     <Company>Decode</Company>
     <Product>Decode.Slacker</Product>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageReleaseNotes># Decode.Slacker-1.1.0-pre1.0
+    <PackageReleaseNotes># Decode.Slacker-1.1.0-pre2.0
+- bugfix: Fixed issue that treated identity fields as regular fields
+- refactor: Maintain signature of DataModel to provide backwards compatability
+- added: View-modelling tools and access to property changed events on DataModels
+
+# Decode.Slacker-1.1.0-pre1.1
 - bugfix: Non-task based CRUD (DataService) functions no longer lock the current thread
 - changed: Various internal changes, optimisations and bugfixes 
 - added: SqlConnectionService for better connection management
@@ -27,7 +32,7 @@ ____
     <PackageProjectUrl>https://github.com/DesignTeamNZ/Decode.Slacker</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://avatars2.githubusercontent.com/u/20100139</PackageIconUrl>
-    <FileVersion>1.1.0-pre1.1</FileVersion>
+    <FileVersion>1.1.0.6</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
