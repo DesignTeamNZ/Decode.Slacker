@@ -1,15 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyVersion>1.1.0.7</AssemblyVersion>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <AssemblyVersion>1.1.0.8</AssemblyVersion>
     <PackageId>Decode.Slacker</PackageId>
-    <Version>1.1.0-pre2.1</Version>
+    <Version>1.1.0</Version>
     <Authors>Cody Rees</Authors>
     <Company>Decode</Company>
     <Product>Decode.Slacker</Product>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageReleaseNotes># Decode.Slacker-1.1.0-pre2.1
+    <PackageReleaseNotes># Decode.Slacker-1.1.0
+- Slacker now targets both .NET Framework and Standard
+- Release build
+
+# Decode.Slacker-1.1.0-pre2.3
 - bugfix: Fixes crash when field attribute  name is missing
 
 # Decode.Slacker-1.1.0-pre2.0
@@ -35,7 +39,7 @@ ____
     <PackageProjectUrl>https://github.com/DesignTeamNZ/Decode.Slacker</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://avatars2.githubusercontent.com/u/20100139</PackageIconUrl>
-    <FileVersion>1.1.0.7</FileVersion>
+    <FileVersion>1.1.0.8</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -47,5 +51,20 @@ ____
     <PackageReference Include="FastMember" Version="1.4.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <DefineConstants>netstandard2_0</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='net461'">
+    <DefineConstants>net461</DefineConstants>
+  </PropertyGroup>
 
 </Project>

@@ -27,7 +27,7 @@ namespace Slacker {
             get => _fieldName;
             set {
                 _fieldName = value;
-                _fieldNameAsSql = $"[{value.Replace(".", "].[")}]";
+                _fieldNameAsSql = value == null ? null : $"[{value.Replace(".", "].[")}]";
             }
         }
 
