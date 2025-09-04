@@ -1,15 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net481</TargetFrameworks>
     <AssemblyVersion>1.1.0.8</AssemblyVersion>
     <PackageId>Decode.Slacker</PackageId>
-    <Version>1.1.0</Version>
-    <Authors>Cody Rees</Authors>
+    <Version>1.2.0</Version>
+    <Authors>Cody Rees, Age de Boer</Authors>
     <Company>Decode</Company>
     <Product>Decode.Slacker</Product>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <PackageReleaseNotes># Decode.Slacker-1.1.0
+    <PackageReleaseNotes># Decode.Slacker-1.2.0
+- Slacker now targets &gt;NET framework 4.8.1
+- Moved from deprecated System.Data.SqlClient to Microsoft.Data.SqlClient
+- Upgraded all dependencies to latest versions
+
+# Decode.Slacker-1.1.0
 - Slacker now targets both .NET Framework and Standard
 - Release build
 
@@ -35,7 +40,7 @@ ____
 # Decode.Slacker-1.0.0
 - Release</PackageReleaseNotes>
     <Description>A lightweight ORM (Like EntityFramework) built on Dapper</Description>
-    <Copyright>Copyright © Decode (NZ) 2019</Copyright>
+    <Copyright>Copyright © Decode (NZ) 2025</Copyright>
     <PackageProjectUrl>https://github.com/DesignTeamNZ/Decode.Slacker</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://avatars2.githubusercontent.com/u/20100139</PackageIconUrl>
@@ -47,12 +52,17 @@ ____
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.50.5" />
-    <PackageReference Include="FastMember" Version="1.4.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="FastMember" Version="1.5.0" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net481" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net481'">
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -63,8 +73,8 @@ ____
     <DefineConstants>netstandard2_0</DefineConstants>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='net461'">
-    <DefineConstants>net461</DefineConstants>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net481'">
+    <DefineConstants>net481</DefineConstants>
   </PropertyGroup>
 
 </Project>
